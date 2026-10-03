@@ -197,7 +197,7 @@ window.addEventListener('scroll', () => {
 
 if (!prefersReducedMotion && window.matchMedia('(pointer:fine)').matches) {
   const hero = document.querySelector('.hero');
-  const layers = [...hero.querySelectorAll('.depth-layer')];
+  const layers = [...hero.querySelectorAll('.scene-img[data-depth]')];
   let frame = 0;
 
   hero.addEventListener('pointermove', event => {
