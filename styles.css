@@ -285,6 +285,26 @@ html[data-theme="dark"] .theme-track i{transform:translateX(20px)}
 .scene-lantern{width:11%;right:-1%;bottom:3%}
 .scene-wood{width:41%;right:-2%;bottom:-1%}
 .scene-blur-leaves{width:37%;left:48%;bottom:-7%;opacity:.92}
+.scene-clouds{z-index:10}
+.scene-mountains{z-index:11}
+.scene-architecture{z-index:12}
+.scene-island{z-index:13}
+.scene-tree{z-index:20}
+.scene-top-branches{z-index:21}
+.scene-hanging{z-index:22}
+.scene-ribbon-a{z-index:24}
+.scene-ribbon-b{z-index:25}
+.scene-windy{z-index:26}
+.scene-character{z-index:40}
+.scene-window{z-index:50}
+.scene-sketches{z-index:51}
+.scene-dove{z-index:52}
+.scene-desk-main{z-index:53}
+.scene-pens{z-index:54}
+.scene-ink{z-index:55}
+.scene-lantern{z-index:56}
+.scene-wood{z-index:70}
+.scene-blur-leaves{z-index:71}
 html[data-theme="dark"] .hero-art .scene-img{filter:brightness(.82) saturate(1.05)}
 html[data-theme="dark"] .scene-ribbon-a,
 html[data-theme="dark"] .scene-ribbon-b{filter:brightness(.95) saturate(1.15)}
