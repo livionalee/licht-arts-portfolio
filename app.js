@@ -1,60 +1,58 @@
 const projects = [
   {
-    title: 'Lumen Studio',
+    title: 'Beyond the Clouds',
+    category: 'illustration',
+    categoryLabel: 'Digital Illustration',
+    description: 'A tranquil mountain-world study built around atmosphere, scale, and layered environmental storytelling.',
+    art: 'ref-1',
+    tags: ['Illustration', 'Environment', 'Visual Storytelling']
+  },
+  {
+    title: 'Quiet Growth',
     category: 'identity',
-    categoryLabel: 'Brand Identity',
-    description: 'A conceptual brand and visual system exploring clarity, creative energy, and forward momentum.',
-    art: 'art-identity',
-    tags: ['Identity', 'Art Direction', 'Visual System']
+    categoryLabel: 'Brand & Visual Design',
+    description: 'An organic visual-system exploration using botanical forms, grids, negative space, and a restrained green palette.',
+    art: 'ref-2',
+    tags: ['Identity', 'Visual System', 'Art Direction']
   },
   {
-    title: 'Fragments of a Brighter Tomorrow',
-    category: 'editorial',
-    categoryLabel: 'Editorial Design',
-    description: 'A visual series about growth, perspective, and change — built around spatial typography and luminous green contrasts.',
-    art: 'art-editorial',
-    tags: ['Editorial', 'Layout', 'Typography']
+    title: 'Daily Fragments',
+    category: 'illustration',
+    categoryLabel: 'Illustration Series',
+    description: 'Sketchbook-inspired fragments where observation, nature, and small visual details become a larger story.',
+    art: 'ref-3',
+    tags: ['Illustration', 'Sketchbook', 'Series']
   },
   {
-    title: 'Digital Garden',
-    category: 'game',
-    categoryLabel: 'Game / Digital',
-    description: 'A dark interface and key-art experiment combining environmental storytelling with a controlled neon accent system.',
-    art: 'art-game',
-    tags: ['Game Art', 'Interface', 'Key Visual']
+    title: 'Verdant Signal',
+    category: 'digital',
+    categoryLabel: 'Digital Experience',
+    description: 'A luminous digital-art study exploring movement, atmosphere, and expressive interface composition.',
+    art: 'ref-4',
+    tags: ['Digital', 'Motion', 'Interface']
   },
   {
-    title: 'Living Signal',
+    title: 'Field Notes',
     category: 'identity',
-    categoryLabel: 'Visual System',
-    description: 'An evolving identity study built from light, motion, high-contrast fields, and adaptable composition rules.',
-    art: 'art-motion',
-    tags: ['Motion', 'Identity', 'Campaign']
+    categoryLabel: 'Editorial / Identity',
+    description: 'A flexible visual language combining clean editorial structure with hand-made botanical details.',
+    art: 'ref-5',
+    tags: ['Editorial', 'Branding', 'Typography']
   },
   {
-    title: 'Afterlight Archive',
-    category: 'editorial',
-    categoryLabel: 'Editorial / Archive',
-    description: 'A publication concept where image, white space, and pace work together like a cinematic sequence.',
-    art: 'art-editorial',
-    tags: ['Publication', 'Editorial', 'Grid']
-  },
-  {
-    title: 'Neon Habitat',
-    category: 'game',
-    categoryLabel: 'Game / Digital',
-    description: 'An immersive art direction study for digital worlds: crisp interface logic against atmospheric environments.',
-    art: 'art-game',
-    tags: ['Environment', 'HUD', 'Digital Art']
+    title: 'Green Horizon',
+    category: 'digital',
+    categoryLabel: 'Environment & Key Art',
+    description: 'A scenic key-art exploration designed to feel expansive, calm, and slightly otherworldly.',
+    art: 'ref-6',
+    tags: ['Key Art', 'Environment', 'Digital Art']
   }
 ];
 
 const root = document.documentElement;
-const body = document.body;
 const projectGrid = document.querySelector('#projectGrid');
 const filters = [...document.querySelectorAll('.filter')];
 const themeToggle = document.querySelector('.theme-toggle');
-const themeIcon = document.querySelector('.theme-icon');
 const header = document.querySelector('.site-header');
 const dialog = document.querySelector('#projectDialog');
 const dialogArt = document.querySelector('#dialogArt');
@@ -62,34 +60,39 @@ const dialogMeta = document.querySelector('#dialogMeta');
 const dialogTitle = document.querySelector('#dialogTitle');
 const dialogDescription = document.querySelector('#dialogDescription');
 const dialogTags = document.querySelector('#dialogTags');
-const slideNumber = document.querySelector('#slideNumber');
-const progressBar = document.querySelector('#progressBar');
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let activeFilter = 'all';
-let slide = 1;
 
 function renderProjects() {
-  const visible = projects.filter(project => activeFilter === 'all' || project.category === activeFilter);
-  projectGrid.innerHTML = visible.map((project, index) => `
-    <article class="project-card reveal" tabindex="0" role="button" aria-label="Open ${project.title}" data-project="${projects.indexOf(project)}">
-      <div class="project-art ${project.art}"></div>
-      <div class="project-info">
-        <span class="project-index">${String(index + 1).padStart(2,'0')} / ${project.categoryLabel}</span>
-        <h3>${project.title}</h3>
-        <p>${project.description}</p>
-        <span class="project-arrow">↗</span>
-      </div>
-    </article>
-  `).join('');
+  const visibleProjects = projects.filter(project => activeFilter === 'all' || project.category === activeFilter);
+
+  projectGrid.innerHTML = visibleProjects.map((project, index) => {
+    const projectIndex = projects.indexOf(project);
+    return `
+      <article class="project-card reveal" tabindex="0" role="button" aria-label="Open ${project.title}" data-project="${projectIndex}">
+        <div class="project-art ${project.art}"></div>
+        <div class="project-info">
+          <span class="project-index">${String(index + 1).padStart(2, '0')}</span>
+          <div class="project-copy">
+            <h3>${project.title}</h3>
+            <p>${project.categoryLabel}</p>
+          </div>
+          <span class="project-arrow" aria-hidden="true">↗</span>
+        </div>
+      </article>
+    `;
+  }).join('');
 
   observeReveals();
-  [...projectGrid.querySelectorAll('.project-card')].forEach(card => {
-    card.addEventListener('click', () => openProject(Number(card.dataset.project)));
+
+  projectGrid.querySelectorAll('.project-card').forEach(card => {
+    const open = () => openProject(Number(card.dataset.project));
+    card.addEventListener('click', open);
     card.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        openProject(Number(card.dataset.project));
+        open();
       }
     });
   });
@@ -97,104 +100,122 @@ function renderProjects() {
 
 function openProject(index) {
   const project = projects[index];
+  if (!project) return;
+
   dialogArt.className = `dialog-art project-art ${project.art}`;
   dialogMeta.textContent = project.categoryLabel;
   dialogTitle.textContent = project.title;
   dialogDescription.textContent = project.description;
   dialogTags.innerHTML = project.tags.map(tag => `<span>${tag}</span>`).join('');
+
   if (!dialog.open) dialog.showModal();
 }
 
 function setTheme(theme) {
   root.dataset.theme = theme;
   localStorage.setItem('licht-theme', theme);
-  themeIcon.textContent = theme === 'dark' ? '☼' : '☾';
-  document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#061107' : '#f5f6f1';
+  const themeColor = theme === 'dark' ? '#081009' : '#f5f3eb';
+  document.querySelector('meta[name="theme-color"]').content = themeColor;
+  themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
 }
 
-const savedTheme = localStorage.getItem('licht-theme');
-setTheme(savedTheme || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+setTheme(localStorage.getItem('licht-theme') || 'light');
 
-themeToggle.addEventListener('click', () => setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark'));
-
-document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
-dialog.addEventListener('click', event => {
-  const rect = dialog.getBoundingClientRect();
-  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+themeToggle.addEventListener('click', () => {
+  setTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
 });
 
 filters.forEach(button => {
   button.addEventListener('click', () => {
-    filters.forEach(item => item.classList.remove('active'));
-    button.classList.add('active');
     activeFilter = button.dataset.filter;
+    filters.forEach(filter => filter.classList.toggle('active', filter === button));
     renderProjects();
   });
 });
 
 document.querySelector('#showAllWork').addEventListener('click', () => {
   activeFilter = 'all';
-  filters.forEach(item => item.classList.toggle('active', item.dataset.filter === 'all'));
+  filters.forEach(filter => filter.classList.toggle('active', filter.dataset.filter === 'all'));
   renderProjects();
-  projectGrid.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+  projectGrid.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'nearest' });
 });
 
-function changeSlide(direction) {
-  slide += direction;
-  if (slide > 3) slide = 1;
-  if (slide < 1) slide = 3;
-  body.dataset.slide = String(slide);
-  slideNumber.textContent = `0${slide}`;
-  progressBar.style.width = `${slide * 33.333}%`;
-}
+document.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
 
-document.querySelector('#nextSlide').addEventListener('click', () => changeSlide(1));
-document.querySelector('#prevSlide').addEventListener('click', () => changeSlide(-1));
+dialog.addEventListener('click', event => {
+  const rect = dialog.getBoundingClientRect();
+  const inside =
+    event.clientX >= rect.left &&
+    event.clientX <= rect.right &&
+    event.clientY >= rect.top &&
+    event.clientY <= rect.bottom;
+  if (!inside) dialog.close();
+});
 
 let revealObserver;
+
 function observeReveals() {
   if (revealObserver) revealObserver.disconnect();
+
   revealObserver = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        revealObserver.unobserve(entry.target);
-      }
-    }
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObserver.observe(el));
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal:not(.visible)').forEach(element => revealObserver.observe(element));
 }
 
 const sectionObserver = new IntersectionObserver(entries => {
   const current = entries
     .filter(entry => entry.isIntersecting)
-    .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+    .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
   if (!current) return;
+
   const section = current.target.dataset.section;
-  document.querySelectorAll('.rail-item').forEach(link => link.classList.toggle('active', link.dataset.section === section));
-  document.querySelectorAll('.nav-link').forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${section}`));
-}, { rootMargin: '-25% 0px -45% 0px', threshold: [0.1,0.35,0.7] });
+
+  document.querySelectorAll('.rail-item').forEach(link => {
+    link.classList.toggle('active', link.dataset.section === section);
+  });
+
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.toggle('active', link.getAttribute('href') === `#${section}`);
+  });
+}, {
+  rootMargin: '-24% 0px -48% 0px',
+  threshold: [0.1, 0.35, 0.65]
+});
 
 document.querySelectorAll('.section-observed').forEach(section => sectionObserver.observe(section));
-window.addEventListener('scroll', () => header.classList.toggle('scrolled', window.scrollY > 24), { passive:true });
+
+window.addEventListener('scroll', () => {
+  header.classList.toggle('scrolled', window.scrollY > 18);
+}, { passive: true });
 
 if (!prefersReducedMotion && window.matchMedia('(pointer:fine)').matches) {
-  const stage = document.querySelector('.art-stage');
-  let raf = 0;
-  stage.addEventListener('pointermove', event => {
-    if (raf) return;
-    raf = requestAnimationFrame(() => {
-      const rect = stage.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - .5;
-      const y = (event.clientY - rect.top) / rect.height - .5;
-      document.querySelectorAll('.poster').forEach(poster => {
-        const depth = Number(poster.dataset.depth || .5);
-        poster.style.translate = `${x * 12 * depth}px ${y * 10 * depth}px`;
-      });
-      raf = 0;
+  const hero = document.querySelector('.hero');
+  let frame = 0;
+
+  hero.addEventListener('pointermove', event => {
+    if (frame) return;
+
+    frame = requestAnimationFrame(() => {
+      const rect = hero.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width - 0.5) * -12;
+      const y = ((event.clientY - rect.top) / rect.height - 0.5) * -8;
+      hero.style.setProperty('--art-x', `${x}px`);
+      hero.style.setProperty('--art-y', `${y}px`);
+      frame = 0;
     });
   });
-  stage.addEventListener('pointerleave', () => document.querySelectorAll('.poster').forEach(poster => poster.style.translate = '0 0'));
+
+  hero.addEventListener('pointerleave', () => {
+    hero.style.setProperty('--art-x', '0px');
+    hero.style.setProperty('--art-y', '0px');
+  });
 }
 
 renderProjects();
