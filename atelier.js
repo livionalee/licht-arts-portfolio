@@ -90,7 +90,8 @@
     const hero = heroEl();
     if (!el || !hero) return { x:10, y:10, width:20, opacity:1, z:5, rotation:0, visible:true };
     const r = el.getBoundingClientRect();
-    const hr = hero.getBoundingClientRect();
+    const parent = el.offsetParent || el.parentElement || hero;
+    const pr = parent.getBoundingClientRect();
     const cs = preview.contentWindow.getComputedStyle(el);
     const isTitle = key === 'heroTitle';
     let text = '';
@@ -98,9 +99,9 @@
     else if (el.matches('a')) text = el.querySelector('span')?.textContent || el.textContent || '';
     else if (!el.querySelector('img')) text = el.textContent?.trim() || '';
     return {
-      x: ((r.left - hr.left) / hr.width) * 100,
-      y: ((r.top - hr.top) / hr.height) * 100,
-      width: (r.width / hr.width) * 100,
+      x: ((r.left - pr.left) / pr.width) * 100,
+      y: ((r.top - pr.top) / pr.height) * 100,
+      width: (r.width / pr.width) * 100,
       opacity: Number(cs.opacity || 1),
       z: Number(cs.zIndex === 'auto' ? 5 : cs.zIndex),
       rotation: 0,
@@ -119,16 +120,138 @@
     return config.managed[key];
   }
 
-  function renderLayers() {
+  function parentKeyFor(key) {
     const doc = iframeDoc();
-    const keys = doc ? [...doc.querySelectorAll('[data-editor-key]')].map(el => el.dataset.editorKey).filter(Boolean) : [];
-    const managedKeys = [...new Set(keys.filter(k => !k.startsWith('custom:')))];
+    const el = doc?.querySelector('[data-editor-key="' + CSS.escape(key) + '"]');
+    if (!el) return 'hero';
+    const parentEditor = el.parentElement?.closest?.('[data-editor-key]');
+    return parentEditor?.dataset?.editorKey || 'hero';
+  }
+
+  function allLayerKeys() {
+    const doc = iframeDoc();
+    const dom = doc ? [...doc.querySelectorAll('[data-editor-key]')].map(el => el.dataset.editorKey).filter(Boolean) : [];
     const custom = (config.customElements || []).map(x => 'custom:' + x.id);
-    layersList.innerHTML = [...managedKeys, ...custom].map(key => {
-      const name = key.startsWith('custom:') ? ((stateFor(key)?.type || 'element') + ' · ' + key.slice(7,13)) : (labels[key] || key);
-      return '<button class="layer-item ' + (key === selectedKey ? 'active' : '') + '" data-key="' + key + '"><span class="layer-dot"></span><span>' + name + '</span></button>';
-    }).join('');
-    layersList.querySelectorAll('.layer-item').forEach(btn => btn.onclick = () => selectLayer(btn.dataset.key));
+    return [...new Set([...dom, ...custom])];
+  }
+
+  function zFor(key) {
+    const state = stateFor(key);
+    return Number(state?.z ?? 0);
+  }
+
+  function keysInStack(parentKey) {
+    return allLayerKeys()
+      .filter(key => parentKeyFor(key) === parentKey)
+      .sort((a, b) => zFor(b) - zFor(a));
+  }
+
+  function normalizeStack(keys) {
+    const count = keys.length;
+    keys.forEach((key, index) => {
+      const state = stateFor(key);
+      if (state) state.z = (count - index) * 10;
+    });
+  }
+
+  function reorderLayer(sourceKey, targetKey, after = false) {
+    const parent = parentKeyFor(sourceKey);
+    if (parent !== parentKeyFor(targetKey) || sourceKey === targetKey) return;
+    const keys = keysInStack(parent).filter(key => key !== sourceKey);
+    let index = keys.indexOf(targetKey);
+    if (index < 0) return;
+    if (after) index += 1;
+    keys.splice(index, 0, sourceKey);
+    normalizeStack(keys);
+    snapshot();
+    sendPreview();
+    renderLayers();
+    selectLayer(sourceKey);
+    setStatus('Layer order changed');
+  }
+
+  function moveSelectedLayer(mode) {
+    if (!selectedKey) return;
+    const parent = parentKeyFor(selectedKey);
+    const keys = keysInStack(parent);
+    const index = keys.indexOf(selectedKey);
+    if (index < 0 || keys.length < 2) return;
+
+    keys.splice(index, 1);
+    let nextIndex = index;
+    if (mode === 'front') nextIndex = 0;
+    if (mode === 'forward') nextIndex = Math.max(0, index - 1);
+    if (mode === 'backward') nextIndex = Math.min(keys.length, index + 1);
+    if (mode === 'back') nextIndex = keys.length;
+    keys.splice(nextIndex, 0, selectedKey);
+
+    normalizeStack(keys);
+    snapshot();
+    sendPreview();
+    renderLayers();
+    selectLayer(selectedKey);
+    setStatus('Layer order changed');
+  }
+
+  function renderLayers() {
+    const keys = allLayerKeys();
+    const topLevel = keys.filter(key => parentKeyFor(key) === 'hero').sort((a, b) => zFor(b) - zFor(a));
+    const used = new Set();
+    const rows = [];
+
+    const row = (key, child = false) => {
+      if (used.has(key)) return;
+      used.add(key);
+      const state = stateFor(key);
+      const name = key.startsWith('custom:')
+        ? ((state?.type || 'element') + ' · ' + key.slice(7,13))
+        : (labels[key] || key);
+      rows.push(
+        '<button class="layer-item ' + (child ? 'child ' : '') + (key === selectedKey ? 'active' : '') +
+        '" draggable="true" data-key="' + key + '">' +
+        '<span class="layer-handle">⋮⋮</span><span class="layer-dot"></span>' +
+        '<span class="layer-name">' + name + '</span><span class="layer-z">z' + Math.round(zFor(key)) + '</span></button>'
+      );
+    };
+
+    topLevel.forEach(parent => {
+      row(parent, false);
+      keysInStack(parent).forEach(child => row(child, true));
+    });
+
+    keys.filter(key => !used.has(key)).sort((a,b) => zFor(b)-zFor(a)).forEach(key => row(key, false));
+    layersList.innerHTML = rows.join('');
+
+    let dragKey = null;
+    layersList.querySelectorAll('.layer-item').forEach(btn => {
+      btn.onclick = () => selectLayer(btn.dataset.key);
+      btn.addEventListener('dragstart', event => {
+        dragKey = btn.dataset.key;
+        btn.classList.add('dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', dragKey);
+      });
+      btn.addEventListener('dragend', () => {
+        dragKey = null;
+        btn.classList.remove('dragging');
+        layersList.querySelectorAll('.drag-over').forEach(x => x.classList.remove('drag-over'));
+      });
+      btn.addEventListener('dragover', event => {
+        const source = dragKey || event.dataTransfer.getData('text/plain');
+        if (!source || parentKeyFor(source) !== parentKeyFor(btn.dataset.key)) return;
+        event.preventDefault();
+        btn.classList.add('drag-over');
+        event.dataTransfer.dropEffect = 'move';
+      });
+      btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+      btn.addEventListener('drop', event => {
+        event.preventDefault();
+        btn.classList.remove('drag-over');
+        const source = dragKey || event.dataTransfer.getData('text/plain');
+        const rect = btn.getBoundingClientRect();
+        reorderLayer(source, btn.dataset.key, event.clientY > rect.top + rect.height / 2);
+      });
+    });
   }
 
   function selectLayer(key) {
@@ -187,7 +310,14 @@
   Object.values(fields).forEach(field => {
     if (!field || field === fields.name) return;
     field.addEventListener(field.type === 'checkbox' ? 'change' : 'input', () => updateSelected(false));
-    field.addEventListener('change', () => { updateSelected(false); snapshot(); });
+    field.addEventListener('change', () => {
+      updateSelected(false);
+      snapshot();
+      if (field === fields.z) {
+        renderLayers();
+        selectLayer(selectedKey);
+      }
+    });
   });
 
   async function loadDraft() {
@@ -273,7 +403,9 @@
     const state = stateFor(selectedKey);
     if (!state) return;
     if (selectedKey.startsWith('custom:')) {
-      addCustom(state.type, { ...structuredClone(state), id:undefined, x:(state.x||0)+2, y:(state.y||0)+2 });
+      const clone = structuredClone(state);
+      delete clone.id;
+      addCustom(state.type, { ...clone, x:(state.x||0)+2, y:(state.y||0)+2 });
     }
   }
 
@@ -299,10 +431,12 @@
 
     doc.addEventListener('pointermove', e => {
       if (!drag) return;
-      const heroRect = hero.getBoundingClientRect();
+      const target = doc.querySelector('[data-editor-key="' + CSS.escape(drag.key) + '"]');
+      const parent = target?.offsetParent || target?.parentElement || hero;
+      const parentRect = parent.getBoundingClientRect();
       const state = stateFor(drag.key);
-      state.x = drag.x + ((e.clientX - drag.startX) / heroRect.width) * 100;
-      state.y = drag.y + ((e.clientY - drag.startY) / heroRect.height) * 100;
+      state.x = drag.x + ((e.clientX - drag.startX) / parentRect.width) * 100;
+      state.y = drag.y + ((e.clientY - drag.startY) / parentRect.height) * 100;
       fields.x.value = round(state.x);
       fields.y.value = round(state.y);
       sendPreview();
@@ -341,6 +475,10 @@
   imageInput.onchange = () => uploadImage(imageInput.files?.[0]).catch(e => setStatus(e.message));
   $('#deleteBtn').onclick = deleteSelected;
   $('#duplicateBtn').onclick = duplicateSelected;
+  $('#toFrontBtn').onclick = () => moveSelectedLayer('front');
+  $('#forwardBtn').onclick = () => moveSelectedLayer('forward');
+  $('#backwardBtn').onclick = () => moveSelectedLayer('backward');
+  $('#toBackBtn').onclick = () => moveSelectedLayer('back');
 
   document.querySelectorAll('.device').forEach(btn => btn.onclick = () => {
     document.querySelectorAll('.device').forEach(x => x.classList.toggle('active', x === btn));
