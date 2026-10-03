@@ -624,7 +624,7 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   z-index:6;
   color:color-mix(in srgb,var(--green) 24%,transparent);
   text-shadow:0 12px 35px color-mix(in srgb,var(--green) 9%,transparent);
-  animation:licht-main-arrive 1.15s cubic-bezier(.16,.78,.22,1) both;
+  transition:color .28s ease,transform .55s cubic-bezier(.2,.72,.2,1);
 }
 .licht-copy:not(.licht-main){
   z-index:4;
@@ -635,36 +635,14 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
     transform .72s cubic-bezier(.2,.72,.2,1),
     opacity .48s ease;
 }
-.licht-motion-ready .licht-copy-1{transform:translateY(-92px);opacity:.14}
-.licht-motion-ready .licht-copy-2{transform:translateY(-54px);opacity:.22}
-.licht-motion-ready .licht-copy-3{transform:translateY(-20px);opacity:.33}
-.licht-motion-ready .licht-copy-4{transform:translateY(38px);opacity:.26}
-.licht-motion-ready .licht-copy-5{transform:translateY(76px);opacity:.14}
-
-.licht-word.is-rippling .licht-copy-1{transform:translateY(-132px) scaleX(1.035);opacity:.55}
-.licht-word.is-rippling .licht-copy-2{transform:translateY(-82px) scaleX(1.02);opacity:.72}
-.licht-word.is-rippling .licht-copy-3{transform:translateY(-34px) scaleX(1.01);opacity:.88}
-.licht-word.is-rippling .licht-copy-4{transform:translateY(58px) scaleX(1.015);opacity:.7}
-.licht-word.is-rippling .licht-copy-5{transform:translateY(108px) scaleX(1.03);opacity:.48}
-.licht-word.is-rippling .licht-main{
+.licht-word:hover .licht-copy-1{transform:translateY(-132px) scaleX(1.035);opacity:.55}
+.licht-word:hover .licht-copy-2{transform:translateY(-82px) scaleX(1.02);opacity:.72}
+.licht-word:hover .licht-copy-3{transform:translateY(-34px) scaleX(1.01);opacity:.88}
+.licht-word:hover .licht-copy-4{transform:translateY(58px) scaleX(1.015);opacity:.7}
+.licht-word:hover .licht-copy-5{transform:translateY(108px) scaleX(1.03);opacity:.48}
+.licht-word:hover .licht-main{
   color:color-mix(in srgb,var(--green-bright) 86%,var(--green));
   transform:scale(1.018);
-}
-
-@keyframes licht-main-arrive{
-  0%{
-    opacity:0;
-    letter-spacing:.13em;
-    transform:scale(.9);
-    filter:blur(5px);
-  }
-  55%{opacity:1}
-  100%{
-    opacity:1;
-    letter-spacing:-.09em;
-    transform:scale(1);
-    filter:blur(0);
-  }
 }
 
 .falling-leaves{
@@ -924,16 +902,16 @@ footer{
   .about-visual{height:320px;margin-top:56px}
   .licht-word{height:210px;width:100%}
   .licht-copy{font-size:29vw}
-  .licht-motion-ready .licht-copy-1{transform:translateY(-62px);opacity:.12}
-  .licht-motion-ready .licht-copy-2{transform:translateY(-38px);opacity:.18}
-  .licht-motion-ready .licht-copy-3{transform:translateY(-14px);opacity:.28}
-  .licht-motion-ready .licht-copy-4{transform:translateY(28px);opacity:.22}
-  .licht-motion-ready .licht-copy-5{transform:translateY(52px);opacity:.12}
-  .licht-word.is-rippling .licht-copy-1{transform:translateY(-82px);opacity:.5}
-  .licht-word.is-rippling .licht-copy-2{transform:translateY(-52px);opacity:.66}
-  .licht-word.is-rippling .licht-copy-3{transform:translateY(-20px);opacity:.82}
-  .licht-word.is-rippling .licht-copy-4{transform:translateY(38px);opacity:.64}
-  .licht-word.is-rippling .licht-copy-5{transform:translateY(70px);opacity:.44}
+  .licht-word:hover .licht-copy-1{transform:translateY(-62px);opacity:.12}
+  .licht-word:hover .licht-copy-2{transform:translateY(-38px);opacity:.18}
+  .licht-word:hover .licht-copy-3{transform:translateY(-14px);opacity:.28}
+  .licht-word:hover .licht-copy-4{transform:translateY(28px);opacity:.22}
+  .licht-word:hover .licht-copy-5{transform:translateY(52px);opacity:.12}
+  .licht-word:hover .licht-copy-1{transform:translateY(-82px);opacity:.5}
+  .licht-word:hover .licht-copy-2{transform:translateY(-52px);opacity:.66}
+  .licht-word:hover .licht-copy-3{transform:translateY(-20px);opacity:.82}
+  .licht-word:hover .licht-copy-4{transform:translateY(38px);opacity:.64}
+  .licht-word:hover .licht-copy-5{transform:translateY(70px);opacity:.44}
   .about-circle{width:190px}
   .fall-leaf{opacity:.65}
   .process-grid{margin-top:45px}
@@ -950,7 +928,7 @@ footer{
   .reveal{opacity:1;transform:none}
   .scene-img[data-depth]{--layer-x:0px!important;--layer-y:0px!important}
   .licht-copy,.fall-leaf{animation:none!important;transition:none!important}
-  .licht-motion-ready .licht-copy:not(.licht-main){opacity:.16;transform:none!important}
+  .licht-copy:not(.licht-main){opacity:0!important;transform:none!important}
 }
 
 .cms-custom-element{position:absolute;display:block;max-width:none;transform-origin:center;pointer-events:none}
