@@ -19,6 +19,7 @@
   let history = [];
   let historyIndex = -1;
   let drag = null;
+  let resize = null;
 
   const fields = {
     name: $('#fieldName'), x: $('#fieldX'), y: $('#fieldY'), width: $('#fieldWidth'),
@@ -93,8 +94,13 @@
 
   function setStatus(text) { saveStatus.textContent = text; }
 
+  function scheduleSelectionBox() {
+    requestAnimationFrame(() => requestAnimationFrame(updateSelectionBox));
+  }
+
   function sendPreview() {
     preview.contentWindow?.postMessage({ type:'licht-preview-config', config }, location.origin);
+    scheduleSelectionBox();
   }
 
   function iframeDoc() { return preview.contentDocument || preview.contentWindow?.document; }
@@ -330,12 +336,85 @@
 
   function round(n) { return Math.round(Number(n || 0) * 10) / 10; }
 
+  function ensureSelectionBox() {
+    const doc = iframeDoc();
+    if (!doc) return null;
+
+    let box = doc.getElementById('lichtSelectionBox');
+    if (box) return box;
+
+    box = doc.createElement('div');
+    box.id = 'lichtSelectionBox';
+    box.innerHTML = '<span class="licht-resize-handle" title="Drag to resize proportionally"></span>';
+    doc.body.appendChild(box);
+
+    const handle = box.querySelector('.licht-resize-handle');
+    handle.addEventListener('pointerdown', event => {
+      if (!selectedKey) return;
+      const target = doc.querySelector('[data-editor-key="' + CSS.escape(selectedKey) + '"]');
+      const state = stateFor(selectedKey);
+      if (!target || !state) return;
+
+      const isCustom = selectedKey.startsWith('custom:');
+      const isCustomImage = isCustom && state.type === 'image';
+      if (isCustom && !isCustomImage) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const rect = target.getBoundingClientRect();
+      const startDistance = Math.max(24, Math.hypot(event.clientX - rect.left, event.clientY - rect.top));
+      resize = {
+        key: selectedKey,
+        isCustom,
+        startDistance,
+        anchorX: rect.left,
+        anchorY: rect.top,
+        startScale: Number(state.scale ?? 1),
+        startWidth: Number(state.width ?? 18)
+      };
+
+      handle.setPointerCapture?.(event.pointerId);
+      setStatus('Resizing…');
+    });
+
+    return box;
+  }
+
+  function updateSelectionBox() {
+    const doc = iframeDoc();
+    if (!doc) return;
+
+    const box = ensureSelectionBox();
+    if (!box) return;
+
+    const target = selectedKey
+      ? doc.querySelector('[data-editor-key="' + CSS.escape(selectedKey) + '"]')
+      : null;
+
+    if (!target || preview.contentWindow.getComputedStyle(target).display === 'none') {
+      box.style.display = 'none';
+      return;
+    }
+
+    const state = stateFor(selectedKey);
+    const isCustom = selectedKey.startsWith('custom:');
+    const canResize = !isCustom || state?.type === 'image';
+    const rect = target.getBoundingClientRect();
+
+    box.style.display = 'block';
+    box.style.left = rect.left + 'px';
+    box.style.top = rect.top + 'px';
+    box.style.width = Math.max(1, rect.width) + 'px';
+    box.style.height = Math.max(1, rect.height) + 'px';
+    box.querySelector('.licht-resize-handle').style.display = canResize ? 'block' : 'none';
+  }
+
   function highlightPreview(key) {
     const doc = iframeDoc();
     if (!doc) return;
     doc.querySelectorAll('[data-editor-key]').forEach(el => el.style.outline = '');
-    const el = doc.querySelector('[data-editor-key="' + CSS.escape(key || '') + '"]');
-    if (el) el.style.outline = '2px solid #42e84f';
+    updateSelectionBox();
   }
 
   function updateSelected(push = true) {
@@ -482,39 +561,122 @@
     }
   }
 
+  function isTypingTarget(target) {
+    if (!target) return false;
+    const tag = target.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable;
+  }
+
+  function handleUndoShortcut(event) {
+    if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) return;
+    if (event.key.toLowerCase() !== 'z') return;
+    if (isTypingTarget(event.target)) return;
+    event.preventDefault();
+    undo();
+  }
+
   function wirePreview() {
     const doc = iframeDoc();
     const hero = heroEl();
     if (!doc || !hero) return;
+
     const style = doc.createElement('style');
-    style.textContent = '[data-editor-key]{pointer-events:auto!important;cursor:move!important}.hero a[data-editor-key]{pointer-events:auto!important}';
+    style.textContent = `
+      [data-editor-key]{pointer-events:auto!important;cursor:move!important}
+      .hero a[data-editor-key]{pointer-events:auto!important}
+      #lichtSelectionBox{
+        position:fixed;
+        z-index:2147483646;
+        pointer-events:none;
+        border:1.5px solid #42e84f;
+        box-shadow:0 0 0 1px rgba(4,18,7,.45);
+      }
+      #lichtSelectionBox::before,
+      #lichtSelectionBox::after{
+        content:"";
+        position:absolute;
+        width:6px;
+        height:6px;
+        border:1px solid #42e84f;
+        background:#0b130d;
+      }
+      #lichtSelectionBox::before{left:-4px;top:-4px}
+      #lichtSelectionBox::after{right:-4px;top:-4px}
+      .licht-resize-handle{
+        position:absolute;
+        width:13px;
+        height:13px;
+        right:-7px;
+        bottom:-7px;
+        border:2px solid #071009;
+        border-radius:3px;
+        background:#42e84f;
+        pointer-events:auto;
+        cursor:nwse-resize;
+        box-shadow:0 0 0 1px #42e84f;
+      }
+    `;
     doc.head.appendChild(style);
 
-    doc.addEventListener('pointerdown', e => {
-      const el = e.target.closest?.('[data-editor-key]');
+    ensureSelectionBox();
+
+    doc.addEventListener('keydown', handleUndoShortcut, true);
+
+    doc.addEventListener('pointerdown', event => {
+      if (event.target.closest?.('#lichtSelectionBox')) return;
+      const el = event.target.closest?.('[data-editor-key]');
       if (!el) return;
-      e.preventDefault();
-      e.stopPropagation();
+
+      event.preventDefault();
+      event.stopPropagation();
+
       const key = el.dataset.editorKey;
       selectLayer(key);
       const state = stateFor(key);
       const isCustom = key.startsWith('custom:');
+
       drag = {
         key,
         isCustom,
-        startX:e.clientX,
-        startY:e.clientY,
+        startX:event.clientX,
+        startY:event.clientY,
         x:Number(isCustom ? (state.x || 0) : (state.dx || 0)),
         y:Number(isCustom ? (state.y || 0) : (state.dy || 0))
       };
-      el.setPointerCapture?.(e.pointerId);
+
+      el.setPointerCapture?.(event.pointerId);
     }, true);
 
-    doc.addEventListener('pointermove', e => {
+    doc.addEventListener('pointermove', event => {
+      if (resize) {
+        const state = stateFor(resize.key);
+        if (!state) return;
+
+        const currentDistance = Math.max(
+          8,
+          Math.hypot(event.clientX - resize.anchorX, event.clientY - resize.anchorY)
+        );
+        const ratio = Math.max(.05, Math.min(8, currentDistance / resize.startDistance));
+
+        if (resize.isCustom) {
+          state.width = Math.max(1, resize.startWidth * ratio);
+          fields.width.value = round(state.width);
+        } else {
+          state.mode = 'offset';
+          state.scale = Math.max(.05, resize.startScale * ratio);
+          fields.width.value = round(state.scale * 100);
+        }
+
+        sendPreview();
+        setStatus('Resizing…');
+        return;
+      }
+
       if (!drag) return;
+
       const state = stateFor(drag.key);
-      const deltaX = e.clientX - drag.startX;
-      const deltaY = e.clientY - drag.startY;
+      const deltaX = event.clientX - drag.startX;
+      const deltaY = event.clientY - drag.startY;
 
       if (drag.isCustom) {
         const target = doc.querySelector('[data-editor-key="' + CSS.escape(drag.key) + '"]');
@@ -531,18 +693,35 @@
         fields.x.value = round(state.dx);
         fields.y.value = round(state.dy);
       }
+
       sendPreview();
       setStatus('Unsaved changes');
     }, true);
 
     doc.addEventListener('pointerup', () => {
+      if (resize) {
+        resize = null;
+        snapshot();
+        sendPreview();
+        setStatus('Unsaved changes');
+        return;
+      }
+
       if (!drag) return;
       drag = null;
       snapshot();
+      sendPreview();
     }, true);
 
+    preview.contentWindow.addEventListener('scroll', scheduleSelectionBox, { passive:true });
+    preview.contentWindow.addEventListener('resize', scheduleSelectionBox);
+    preview.contentWindow.addEventListener('licht:config-applied', scheduleSelectionBox);
+
     sendPreview();
-    setTimeout(renderLayers, 100);
+    setTimeout(() => {
+      renderLayers();
+      updateSelectionBox();
+    }, 100);
   }
 
   loginForm.addEventListener('submit', async e => {
@@ -569,6 +748,7 @@
   $('#saveBtn').onclick = () => saveDraft().catch(e => setStatus(e.message));
   $('#publishBtn').onclick = () => publish().catch(e => setStatus(e.message));
   $('#undoBtn').onclick = undo;
+  window.addEventListener('keydown', handleUndoShortcut, true);
   $('#logoutBtn').onclick = () => { localStorage.removeItem('licht-atelier-session'); location.reload(); };
   $('#refreshLayers').onclick = renderLayers;
   $('#addText').onclick = () => addCustom('text', { text:'New text' });
