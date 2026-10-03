@@ -247,23 +247,10 @@ html[data-theme="dark"] .theme-track i{transform:translateX(20px)}
   content:"";
   position:absolute;
   inset:0;
-  z-index:30;
+  z-index:999999;
   pointer-events:none;
   background:linear-gradient(90deg,var(--paper) 0,transparent 20%,transparent 90%,color-mix(in srgb,var(--paper) 12%,transparent));
 }
-.depth-layer{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  transform:translate3d(var(--layer-x,0),var(--layer-y,0),0) scale(var(--depth-scale,1.01));
-  transform-origin:center;
-  will-change:transform;
-}
-.depth-back{z-index:1;--depth-scale:1.01}
-.depth-foliage{z-index:3;--depth-scale:1.018}
-.depth-character{z-index:5;--depth-scale:1.015}
-.depth-desk{z-index:6;--depth-scale:1.022}
-.depth-front{z-index:8;--depth-scale:1.03}
 .scene-img{
   position:absolute;
   display:block;
@@ -274,6 +261,9 @@ html[data-theme="dark"] .theme-track i{transform:translateX(20px)}
   image-rendering:auto;
   user-select:none;
   -webkit-user-drag:none;
+  transform:translate3d(var(--layer-x,0),var(--layer-y,0),0);
+  transform-origin:center;
+  will-change:transform;
 }
 .scene-clouds{width:74%;left:13%;top:31%;opacity:.92}
 .scene-mountains{width:72%;left:14%;top:26%}
@@ -810,7 +800,7 @@ footer{
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}
   .reveal{opacity:1;transform:none}
-  .depth-layer{transform:scale(var(--depth-scale,1.01))!important}
+  .scene-img[data-depth]{transform:none!important}
 }
 
 .cms-custom-element{position:absolute;display:block;max-width:none;transform-origin:center;pointer-events:none}
