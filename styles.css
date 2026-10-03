@@ -376,7 +376,7 @@ html[data-theme="dark"] .hero-art::before{
 .work{
   position:relative;
   z-index:6;
-  padding:58px 5vw 92px;
+  padding:58px 5vw 92px max(10.6vw,160px);
   background:var(--paper);
 }
 .brush-edge{
@@ -744,7 +744,7 @@ footer{
 }
 .reveal.visible{opacity:1;transform:none}
 
-@media(max-width:1100px){
+@media(max-width:1180px){
   .site-header{grid-template-columns:1fr auto;padding:0 24px}
   .top-nav{display:none}
   .side-rail{display:none}
