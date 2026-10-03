@@ -299,6 +299,26 @@
     });
   }
 
+  function focusSelectedLayer(key) {
+    if (!key) return;
+
+    const row = layersList.querySelector('.layer-item[data-key="' + CSS.escape(key) + '"]');
+    row?.scrollIntoView({ block:'nearest', behavior:'smooth' });
+
+    const doc = iframeDoc();
+    const target = doc?.querySelector('[data-editor-key="' + CSS.escape(key) + '"]');
+    if (!target) return;
+
+    const rect = target.getBoundingClientRect();
+    const viewH = preview.contentWindow.innerHeight;
+    const viewW = preview.contentWindow.innerWidth;
+    const outside = rect.bottom < 0 || rect.top > viewH || rect.right < 0 || rect.left > viewW;
+
+    if (outside) {
+      target.scrollIntoView({ block:'center', inline:'center', behavior:'smooth' });
+    }
+  }
+
   function selectLayer(key) {
     selectedKey = key;
     renderLayers();
@@ -332,9 +352,28 @@
     $('#textWrap').hidden = !(state.text != null || key === 'heroTitle' || key === 'heroSubtitle' || key === 'heroButton' || state.type === 'text' || state.type === 'button');
     $('#hrefWrap').hidden = !(key === 'heroButton' || state.type === 'button');
     highlightPreview(key);
+    focusSelectedLayer(key);
   }
 
   function round(n) { return Math.round(Number(n || 0) * 10) / 10; }
+
+  function beginElementDrag(event, key) {
+    if (!key || resize) return;
+    const state = stateFor(key);
+    if (!state) return;
+
+    const isCustom = key.startsWith('custom:');
+    drag = {
+      key,
+      isCustom,
+      startX:event.clientX,
+      startY:event.clientY,
+      x:Number(isCustom ? (state.x || 0) : (state.dx || 0)),
+      y:Number(isCustom ? (state.y || 0) : (state.dy || 0))
+    };
+
+    setStatus('Moving…');
+  }
 
   function ensureSelectionBox() {
     const doc = iframeDoc();
@@ -347,6 +386,24 @@
     box.id = 'lichtSelectionBox';
     box.innerHTML = '<span class="licht-resize-handle" title="Drag to resize proportionally"></span>';
     doc.body.appendChild(box);
+
+    box.addEventListener('pointerdown', event => {
+      if (event.target.closest('.licht-resize-handle')) return;
+      if (!selectedKey) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      beginElementDrag(event, selectedKey);
+      box.setPointerCapture?.(event.pointerId);
+    });
+
+    box.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    });
 
     const handle = box.querySelector('.licht-resize-handle');
     handle.addEventListener('pointerdown', event => {
@@ -361,7 +418,10 @@
 
       event.preventDefault();
       event.stopPropagation();
+      event.stopImmediatePropagation();
 
+      // Lock resizing to the layer that was selected when the handle was pressed.
+      selectedKey = target.dataset.editorKey || selectedKey;
       const rect = target.getBoundingClientRect();
       const startDistance = Math.max(24, Math.hypot(event.clientX - rect.left, event.clientY - rect.top));
       resize = {
@@ -587,7 +647,9 @@
       #lichtSelectionBox{
         position:fixed;
         z-index:2147483646;
-        pointer-events:none;
+        pointer-events:auto;
+        cursor:move;
+        background:transparent;
         border:1.5px solid #42e84f;
         box-shadow:0 0 0 1px rgba(4,18,7,.45);
       }
@@ -623,6 +685,12 @@
     doc.addEventListener('keydown', handleUndoShortcut, true);
 
     doc.addEventListener('pointerdown', event => {
+      if (resize) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
       if (event.target.closest?.('#lichtSelectionBox')) return;
       const el = event.target.closest?.('[data-editor-key]');
       if (!el) return;
@@ -632,18 +700,7 @@
 
       const key = el.dataset.editorKey;
       selectLayer(key);
-      const state = stateFor(key);
-      const isCustom = key.startsWith('custom:');
-
-      drag = {
-        key,
-        isCustom,
-        startX:event.clientX,
-        startY:event.clientY,
-        x:Number(isCustom ? (state.x || 0) : (state.dx || 0)),
-        y:Number(isCustom ? (state.y || 0) : (state.dy || 0))
-      };
-
+      beginElementDrag(event, key);
       el.setPointerCapture?.(event.pointerId);
     }, true);
 
@@ -700,17 +757,21 @@
 
     doc.addEventListener('pointerup', () => {
       if (resize) {
+        const resizedKey = resize.key;
         resize = null;
         snapshot();
         sendPreview();
+        selectLayer(resizedKey);
         setStatus('Unsaved changes');
         return;
       }
 
       if (!drag) return;
+      const movedKey = drag.key;
       drag = null;
       snapshot();
       sendPreview();
+      selectLayer(movedKey);
     }, true);
 
     preview.contentWindow.addEventListener('scroll', scheduleSelectionBox, { passive:true });
