@@ -95,7 +95,7 @@ button { color: inherit; }
 .hero-description { max-width: 420px; color: var(--muted); font-size: 17px; }
 
 .art-stage { position: absolute; z-index: 4; inset: 15.5vh 6vw 15vh 17vw; perspective: 1300px; pointer-events: none; }
-.poster { position: absolute; overflow: hidden; border: 1px solid color-mix(in srgb, var(--green) 62%, var(--line)); box-shadow: var(--shadow), 0 0 28px color-mix(in srgb, var(--green) 18%, transparent); background: #080c08; transform-style: preserve-3d; transition: transform .75s var(--ease), opacity .5s var(--ease), filter .5s var(--ease); }
+.poster { pointer-events:none; position: absolute; overflow: hidden; border: 1px solid color-mix(in srgb, var(--green) 62%, var(--line)); box-shadow: var(--shadow), 0 0 28px color-mix(in srgb, var(--green) 18%, transparent); background: #080c08; transform-style: preserve-3d; transition: transform .75s var(--ease), opacity .5s var(--ease), filter .5s var(--ease); }
 .poster::before { content:""; position:absolute; inset:0; background: linear-gradient(115deg, transparent 0 45%, rgba(255,255,255,.13) 47%, transparent 50%); transform: translateX(-100%); animation: sheen 8s ease-in-out infinite; }
 @keyframes sheen { 0%,55%,100%{ transform: translateX(-120%);} 70%{transform: translateX(130%);} }
 .poster-left { width: 24%; height: 58%; left: 3%; top: 21%; transform: rotateY(12deg) rotateZ(-1.2deg); background: radial-gradient(circle at 58% 38%, #47ff50 0 17%, transparent 18%), linear-gradient(145deg, #061008, #172016 58%, #071009); }
