@@ -9,14 +9,17 @@
     if (!el) return;
 
     const isCustom = el.dataset.cmsCustom === 'true';
+    const key = el.dataset.editorKey || '';
     const usesOffsetModel = !isCustom && state.mode === 'offset';
+    const flipX = state.flipX === true;
+    const flipY = state.flipY === true;
 
     if (isCustom) {
       if (state.x != null) { el.style.left = num(state.x) + '%'; el.style.right = 'auto'; }
       if (state.y != null) { el.style.top = num(state.y) + '%'; el.style.bottom = 'auto'; }
       if (state.width != null) el.style.width = Math.max(1, num(state.width, 10)) + '%';
       el.style.translate = '';
-      el.style.scale = '';
+      el.style.scale = (flipX || flipY) ? `${flipX ? -1 : 1} ${flipY ? -1 : 1}` : '';
     } else {
       // Built-in artwork keeps its original CSS anchors and size.
       // Legacy absolute x/y/width values are intentionally ignored because
@@ -26,7 +29,8 @@
       el.style.removeProperty('width');
       if (usesOffsetModel) {
         el.style.translate = num(state.dx, 0) + 'px ' + num(state.dy, 0) + 'px';
-        el.style.scale = String(Math.max(.05, num(state.scale, 1)));
+        const magnitude = Math.max(.05, num(state.scale, 1));
+        el.style.scale = `${magnitude * (flipX ? -1 : 1)} ${magnitude * (flipY ? -1 : 1)}`;
       } else {
         el.style.translate = '';
         el.style.scale = '';
@@ -38,8 +42,11 @@
     if (state.visible != null) el.style.display = state.visible ? '' : 'none';
     el.style.rotate = state.rotation ? num(state.rotation) + 'deg' : '';
     if (state.depth != null && el.dataset.depth != null) el.dataset.depth = String(num(state.depth, .25));
-    if (state.text != null) {
-      if (el.dataset.editorKey === 'heroTitle') {
+    const editableBuiltInText = new Set(['heroTitle', 'heroSubtitle', 'heroButton']);
+    const mayEditText = isCustom || editableBuiltInText.has(key);
+
+    if (mayEditText && state.text != null) {
+      if (key === 'heroTitle') {
         const lines = String(state.text).split('\n');
         el.innerHTML = lines.map((line, i) => i === lines.length - 1 ? '<em>' + escapeHtml(line) + '</em>' : escapeHtml(line)).join('<br>');
       } else if (el.matches('a')) {
@@ -50,7 +57,11 @@
         el.textContent = String(state.text);
       }
     }
-    if (state.href != null && el.matches('a')) el.setAttribute('href', String(state.href || '#'));
+
+    const mayEditHref = isCustom || key === 'heroButton';
+    if (mayEditHref && state.href != null && el.matches('a')) {
+      el.setAttribute('href', String(state.href || '#'));
+    }
   }
 
   function escapeHtml(value) {
