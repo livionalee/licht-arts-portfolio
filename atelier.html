@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>LichtArts Atelier</title>
-  <link rel="stylesheet" href="atelier.css?v=20261004d" />
+  <link rel="stylesheet" href="atelier.css?v=20261004e" />
 </head>
 <body>
   <section class="login-screen" id="loginScreen">
@@ -78,6 +78,10 @@
           <button type="button" id="toBackBtn" title="Send to back">⇊ Back</button>
         </div>
         <div class="two"><label>Opacity<input id="fieldOpacity" type="number" min="0" max="1" step=".05" /></label><label>Rotate °<input id="fieldRotation" type="number" step="1" /></label></div>
+        <div class="flip-actions" aria-label="Flip element">
+          <button type="button" id="flipXBtn" title="Flip horizontally">↔ Flip Horizontal</button>
+          <button type="button" id="flipYBtn" title="Flip vertically">↕ Flip Vertical</button>
+        </div>
         <label id="textWrap">Text<textarea id="fieldText" rows="4"></textarea></label>
         <label id="hrefWrap">Link URL<input id="fieldHref" /></label>
         <label class="toggle"><input id="fieldVisible" type="checkbox" /> Visible</label>
@@ -89,7 +93,7 @@
     </aside>
   </div>
 
-  <script src="cms-api.js?v=20261004d"></script>
-  <script src="atelier.js?v=20261004d"></script>
+  <script src="cms-api.js?v=20261004e"></script>
+  <script src="atelier.js?v=20261004e"></script>
 </body>
 </html>
