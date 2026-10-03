@@ -87,11 +87,7 @@
   function readComputedState(key) {
     const doc = iframeDoc();
     const el = doc?.querySelector('[data-editor-key="' + CSS.escape(key) + '"]');
-    const hero = heroEl();
-    if (!el || !hero) return { x:10, y:10, width:20, opacity:1, z:5, rotation:0, visible:true };
-    const r = el.getBoundingClientRect();
-    const parent = el.offsetParent || el.parentElement || hero;
-    const pr = parent.getBoundingClientRect();
+    if (!el) return { mode:'offset', dx:0, dy:0, scale:1, opacity:1, z:5, rotation:0, visible:true };
     const cs = preview.contentWindow.getComputedStyle(el);
     const isTitle = key === 'heroTitle';
     let text = '';
@@ -99,9 +95,10 @@
     else if (el.matches('a')) text = el.querySelector('span')?.textContent || el.textContent || '';
     else if (!el.querySelector('img')) text = el.textContent?.trim() || '';
     return {
-      x: ((r.left - pr.left) / pr.width) * 100,
-      y: ((r.top - pr.top) / pr.height) * 100,
-      width: (r.width / pr.width) * 100,
+      mode: 'offset',
+      dx: 0,
+      dy: 0,
+      scale: 1,
       opacity: Number(cs.opacity || 1),
       z: Number(cs.zIndex === 'auto' ? 5 : cs.zIndex),
       rotation: 0,
@@ -116,7 +113,23 @@
     if (key.startsWith('custom:')) {
       return config.customElements.find(x => 'custom:' + x.id === key) || null;
     }
-    if (!config.managed[key]) config.managed[key] = readComputedState(key);
+    if (!config.managed[key]) {
+      config.managed[key] = readComputedState(key);
+    } else if (config.managed[key].mode !== 'offset') {
+      // Migrate the old absolute positioning model to safe offsets.
+      // Keep visual properties, but discard legacy x/y/width that caused jumps.
+      const old = config.managed[key];
+      config.managed[key] = {
+        ...old,
+        mode: 'offset',
+        dx: 0,
+        dy: 0,
+        scale: 1
+      };
+      delete config.managed[key].x;
+      delete config.managed[key].y;
+      delete config.managed[key].width;
+    }
     return config.managed[key];
   }
 
@@ -265,10 +278,17 @@
     }
     emptyInspector.hidden = true;
     inspectorForm.hidden = false;
-    fields.name.value = key.startsWith('custom:') ? (state.type || 'custom') : (labels[key] || key);
-    fields.x.value = round(state.x);
-    fields.y.value = round(state.y);
-    fields.width.value = round(state.width);
+    const isCustom = key.startsWith('custom:');
+    fields.name.value = isCustom ? (state.type || 'custom') : (labels[key] || key);
+    $('#labelX').textContent = isCustom ? 'Position X %' : 'X offset px';
+    $('#labelY').textContent = isCustom ? 'Position Y %' : 'Y offset px';
+    $('#labelWidth').textContent = isCustom ? 'Width %' : 'Scale %';
+    fields.x.step = isCustom ? '.1' : '1';
+    fields.y.step = isCustom ? '.1' : '1';
+    fields.width.step = isCustom ? '.1' : '1';
+    fields.x.value = round(isCustom ? state.x : state.dx);
+    fields.y.value = round(isCustom ? state.y : state.dy);
+    fields.width.value = round(isCustom ? state.width : ((state.scale ?? 1) * 100));
     fields.z.value = state.z ?? 5;
     fields.opacity.value = state.opacity ?? 1;
     fields.rotation.value = state.rotation ?? 0;
@@ -293,9 +313,22 @@
   function updateSelected(push = true) {
     const state = stateFor(selectedKey);
     if (!state) return;
-    state.x = Number(fields.x.value || 0);
-    state.y = Number(fields.y.value || 0);
-    state.width = Math.max(1, Number(fields.width.value || 1));
+    const isCustom = selectedKey?.startsWith('custom:');
+
+    if (isCustom) {
+      state.x = Number(fields.x.value || 0);
+      state.y = Number(fields.y.value || 0);
+      state.width = Math.max(1, Number(fields.width.value || 1));
+    } else {
+      state.mode = 'offset';
+      state.dx = Number(fields.x.value || 0);
+      state.dy = Number(fields.y.value || 0);
+      state.scale = Math.max(.05, Number(fields.width.value || 100) / 100);
+      delete state.x;
+      delete state.y;
+      delete state.width;
+    }
+
     state.z = Number(fields.z.value || 0);
     state.opacity = Math.max(0, Math.min(1, Number(fields.opacity.value || 1)));
     state.rotation = Number(fields.rotation.value || 0);
@@ -325,6 +358,7 @@
     config = data.config || { version:1, managed:{}, customElements:[] };
     if (!config.managed) config.managed = {};
     if (!Array.isArray(config.customElements)) config.customElements = [];
+    Object.keys(config.managed).forEach(key => stateFor(key));
     history = [JSON.stringify(config)];
     historyIndex = 0;
     sendPreview();
@@ -425,20 +459,39 @@
       const key = el.dataset.editorKey;
       selectLayer(key);
       const state = stateFor(key);
-      drag = { key, startX:e.clientX, startY:e.clientY, x:Number(state.x||0), y:Number(state.y||0) };
+      const isCustom = key.startsWith('custom:');
+      drag = {
+        key,
+        isCustom,
+        startX:e.clientX,
+        startY:e.clientY,
+        x:Number(isCustom ? (state.x || 0) : (state.dx || 0)),
+        y:Number(isCustom ? (state.y || 0) : (state.dy || 0))
+      };
       el.setPointerCapture?.(e.pointerId);
     }, true);
 
     doc.addEventListener('pointermove', e => {
       if (!drag) return;
-      const target = doc.querySelector('[data-editor-key="' + CSS.escape(drag.key) + '"]');
-      const parent = target?.offsetParent || target?.parentElement || hero;
-      const parentRect = parent.getBoundingClientRect();
       const state = stateFor(drag.key);
-      state.x = drag.x + ((e.clientX - drag.startX) / parentRect.width) * 100;
-      state.y = drag.y + ((e.clientY - drag.startY) / parentRect.height) * 100;
-      fields.x.value = round(state.x);
-      fields.y.value = round(state.y);
+      const deltaX = e.clientX - drag.startX;
+      const deltaY = e.clientY - drag.startY;
+
+      if (drag.isCustom) {
+        const target = doc.querySelector('[data-editor-key="' + CSS.escape(drag.key) + '"]');
+        const parent = target?.offsetParent || target?.parentElement || hero;
+        const parentRect = parent.getBoundingClientRect();
+        state.x = drag.x + (deltaX / parentRect.width) * 100;
+        state.y = drag.y + (deltaY / parentRect.height) * 100;
+        fields.x.value = round(state.x);
+        fields.y.value = round(state.y);
+      } else {
+        state.mode = 'offset';
+        state.dx = drag.x + deltaX;
+        state.dy = drag.y + deltaY;
+        fields.x.value = round(state.dx);
+        fields.y.value = round(state.dy);
+      }
       sendPreview();
       setStatus('Unsaved changes');
     }, true);
