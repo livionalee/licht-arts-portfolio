@@ -7,6 +7,8 @@
   const loginStatus = $('#loginStatus');
   const saveStatus = $('#saveStatus');
   const preview = $('#preview');
+  const previewViewport = $('#previewViewport');
+  const canvasStage = $('#canvasStage');
   const layersList = $('#layersList');
   const revisionList = $('#revisionList');
   const inspectorForm = $('#inspectorForm');
@@ -20,6 +22,7 @@
   let historyIndex = -1;
   let drag = null;
   let resize = null;
+  let previewDevice = { width: 1920, height: 1080, label: 'Desktop' };
 
   const fields = {
     name: $('#fieldName'), x: $('#fieldX'), y: $('#fieldY'), width: $('#fieldWidth'),
@@ -93,6 +96,37 @@
   }
 
   function setStatus(text) { saveStatus.textContent = text; }
+
+  function fitPreviewViewport() {
+    if (!preview || !previewViewport || !canvasStage) return;
+
+    const stageWidth = Math.max(260, canvasStage.clientWidth - 56);
+    const scale = Math.min(1, stageWidth / previewDevice.width);
+
+    preview.style.width = previewDevice.width + 'px';
+    preview.style.height = previewDevice.height + 'px';
+    preview.style.transform = 'scale(' + scale + ')';
+
+    previewViewport.style.width = Math.round(previewDevice.width * scale) + 'px';
+    previewViewport.style.height = Math.round(previewDevice.height * scale) + 'px';
+
+    $('#zoomLabel').textContent =
+      previewDevice.label + ' · ' + Math.round(scale * 100) + '% · ' +
+      previewDevice.width + '×' + previewDevice.height;
+
+    scheduleSelectionBox();
+  }
+
+  function setPreviewDevice(button) {
+    previewDevice = {
+      width: Number(button.dataset.width || 1920),
+      height: Number(button.dataset.height || 1080),
+      label: button.textContent.trim()
+    };
+
+    document.querySelectorAll('.device').forEach(x => x.classList.toggle('active', x === button));
+    fitPreviewViewport();
+  }
 
   function scheduleSelectionBox() {
     requestAnimationFrame(() => requestAnimationFrame(updateSelectionBox));
@@ -825,13 +859,20 @@
   $('#backwardBtn').onclick = () => moveSelectedLayer('backward');
   $('#toBackBtn').onclick = () => moveSelectedLayer('back');
 
-  document.querySelectorAll('.device').forEach(btn => btn.onclick = () => {
-    document.querySelectorAll('.device').forEach(x => x.classList.toggle('active', x === btn));
-    preview.style.width = btn.dataset.width;
-    $('#zoomLabel').textContent = btn.textContent;
+  document.querySelectorAll('.device').forEach(btn => {
+    btn.onclick = () => setPreviewDevice(btn);
   });
 
-  preview.addEventListener('load', wirePreview);
+  const stageResizeObserver = new ResizeObserver(() => fitPreviewViewport());
+  stageResizeObserver.observe(canvasStage);
+  window.addEventListener('resize', fitPreviewViewport, { passive:true });
+
+  preview.addEventListener('load', () => {
+    fitPreviewViewport();
+    wirePreview();
+  });
+
+  fitPreviewViewport();
 
   async function boot() {
     if (!session?.access_token) return;
