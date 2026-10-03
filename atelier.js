@@ -103,7 +103,7 @@
   function readComputedState(key) {
     const doc = iframeDoc();
     const el = doc?.querySelector('[data-editor-key="' + CSS.escape(key) + '"]');
-    if (!el) return { mode:'offset', dx:0, dy:0, scale:1, opacity:1, z:5, rotation:0, visible:true };
+    if (!el) return { mode:'offset', dx:0, dy:0, scale:1, opacity:1, z:5, rotation:0, flipX:false, flipY:false, visible:true };
     const cs = preview.contentWindow.getComputedStyle(el);
     let text = '';
     if (key === 'heroTitle') text = el.innerText.trim();
@@ -117,6 +117,8 @@
       opacity: Number(cs.opacity || 1),
       z: Number(cs.zIndex === 'auto' ? 5 : cs.zIndex),
       rotation: 0,
+      flipX: false,
+      flipY: false,
       visible: cs.display !== 'none',
       ...(text ? { text } : {}),
       ...(el.matches('a') ? { href:el.getAttribute('href') || '#' } : {})
@@ -316,6 +318,8 @@
     fields.z.value = state.z ?? 5;
     fields.opacity.value = state.opacity ?? 1;
     fields.rotation.value = state.rotation ?? 0;
+    $('#flipXBtn').classList.toggle('active', state.flipX === true);
+    $('#flipYBtn').classList.toggle('active', state.flipY === true);
     fields.text.value = state.text ?? '';
     fields.href.value = state.href ?? '';
     fields.visible.checked = state.visible !== false;
@@ -422,7 +426,7 @@
 
   function addCustom(type, extra = {}) {
     const id = (crypto.randomUUID?.() || Date.now().toString(36));
-    const item = { id, type, x:45, y:42, width:type === 'image' ? 18 : 16, opacity:1, z:25, rotation:0, visible:true, ...extra };
+    const item = { id, type, x:45, y:42, width:type === 'image' ? 18 : 16, opacity:1, z:25, rotation:0, flipX:false, flipY:false, visible:true, ...extra };
     config.customElements.push(item);
     snapshot();
     sendPreview();
@@ -455,6 +459,17 @@
       state.visible = false;
     }
     snapshot(); sendPreview(); renderLayers(); selectLayer(selectedKey); setStatus('Unsaved changes');
+  }
+
+  function toggleFlip(axis) {
+    const state = stateFor(selectedKey);
+    if (!state) return;
+    if (axis === 'x') state.flipX = state.flipX !== true;
+    if (axis === 'y') state.flipY = state.flipY !== true;
+    snapshot();
+    sendPreview();
+    selectLayer(selectedKey);
+    setStatus(axis === 'x' ? 'Horizontal flip changed' : 'Vertical flip changed');
   }
 
   function duplicateSelected() {
@@ -562,6 +577,8 @@
   imageInput.onchange = () => uploadImage(imageInput.files?.[0]).catch(e => setStatus(e.message));
   $('#deleteBtn').onclick = deleteSelected;
   $('#duplicateBtn').onclick = duplicateSelected;
+  $('#flipXBtn').onclick = () => toggleFlip('x');
+  $('#flipYBtn').onclick = () => toggleFlip('y');
   $('#toFrontBtn').onclick = () => moveSelectedLayer('front');
   $('#forwardBtn').onclick = () => moveSelectedLayer('forward');
   $('#backwardBtn').onclick = () => moveSelectedLayer('backward');
