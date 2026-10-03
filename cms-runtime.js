@@ -7,14 +7,37 @@
 
   function applyBox(el, state = {}) {
     if (!el) return;
-    if (state.x != null) { el.style.left = num(state.x) + '%'; el.style.right = 'auto'; }
-    if (state.y != null) { el.style.top = num(state.y) + '%'; el.style.bottom = 'auto'; }
-    if (state.width != null) el.style.width = Math.max(1, num(state.width, 10)) + '%';
+
+    const isCustom = el.dataset.cmsCustom === 'true';
+    const usesOffsetModel = !isCustom && state.mode === 'offset';
+
+    if (isCustom) {
+      if (state.x != null) { el.style.left = num(state.x) + '%'; el.style.right = 'auto'; }
+      if (state.y != null) { el.style.top = num(state.y) + '%'; el.style.bottom = 'auto'; }
+      if (state.width != null) el.style.width = Math.max(1, num(state.width, 10)) + '%';
+      el.style.translate = '';
+      el.style.scale = '';
+    } else {
+      // Built-in artwork keeps its original CSS anchors and size.
+      // Legacy absolute x/y/width values are intentionally ignored because
+      // converting right/bottom anchored art to left/top caused jumps/shrinking.
+      el.style.removeProperty('left');
+      el.style.removeProperty('top');
+      el.style.removeProperty('width');
+      if (usesOffsetModel) {
+        el.style.translate = num(state.dx, 0) + 'px ' + num(state.dy, 0) + 'px';
+        el.style.scale = String(Math.max(.05, num(state.scale, 1)));
+      } else {
+        el.style.translate = '';
+        el.style.scale = '';
+      }
+    }
+
     if (state.opacity != null) el.style.opacity = String(Math.max(0, Math.min(1, num(state.opacity, 1))));
     if (state.z != null) el.style.zIndex = String(Math.round(num(state.z, 1)));
     if (state.visible != null) el.style.display = state.visible ? '' : 'none';
     el.style.rotate = state.rotation ? num(state.rotation) + 'deg' : '';
-    if (state.depth != null && el.matches('.depth-layer')) el.dataset.depth = String(num(state.depth, .25));
+    if (state.depth != null && el.dataset.depth != null) el.dataset.depth = String(num(state.depth, .25));
     if (state.text != null) {
       if (el.dataset.editorKey === 'heroTitle') {
         const lines = String(state.text).split('\n');
