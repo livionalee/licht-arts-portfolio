@@ -40,7 +40,12 @@
   async function apiCall(body, auth = true) {
     const headers = { 'content-type':'application/json' };
     if (auth && session?.access_token) headers.authorization = 'Bearer ' + session.access_token;
-    let res = await fetch(api, { method:'POST', headers, body:JSON.stringify(body) });
+    let res;
+    try {
+      res = await fetch(api, { method:'POST', headers, body:JSON.stringify(body) });
+    } catch {
+      throw new Error('CMS connection unavailable. Refresh the page and try again.');
+    }
     if (res.status === 401 && auth && session?.refresh_token && body.action !== 'refresh') {
       const rr = await fetch(api, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({action:'refresh', refresh_token:session.refresh_token}) });
       if (rr.ok) {
@@ -48,7 +53,11 @@
         session = { ...session, ...refreshed };
         localStorage.setItem('licht-atelier-session', JSON.stringify(session));
         headers.authorization = 'Bearer ' + session.access_token;
-        res = await fetch(api, { method:'POST', headers, body:JSON.stringify(body) });
+        try {
+          res = await fetch(api, { method:'POST', headers, body:JSON.stringify(body) });
+        } catch {
+          throw new Error('CMS connection unavailable. Refresh the page and try again.');
+        }
       }
     }
     const data = await res.json().catch(() => ({}));
