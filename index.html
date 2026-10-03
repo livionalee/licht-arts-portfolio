@@ -1,28 +1,33 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="LichtArts — visual storytelling, graphic design, and digital experiences." />
-  <meta name="theme-color" content="#061107" />
+  <meta name="description" content="LichtArts — illustration, visual storytelling, graphic design, and digital experiences." />
+  <meta name="theme-color" content="#f5f3eb" />
   <title>LichtArts — Envision. Explain. Evolve.</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="noise" aria-hidden="true"></div>
+  <div class="paper-noise" aria-hidden="true"></div>
+
   <header class="site-header" id="top">
     <a class="brand" href="#home" aria-label="LichtArts home">
       <span class="brand-mark" aria-hidden="true"><span>L</span></span>
       <span class="brand-name">LichtArts</span>
     </a>
+
     <nav class="top-nav" aria-label="Primary navigation">
       <a class="nav-link active" href="#work">Work</a>
       <a class="nav-link" href="#about">About</a>
       <a class="nav-link" href="#contact">Contact</a>
     </nav>
+
     <button class="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme">
-      <span class="theme-icon" aria-hidden="true">☼</span>
+      <span class="theme-sun" aria-hidden="true">☀</span>
+      <span class="theme-track" aria-hidden="true"><i></i></span>
+      <span class="theme-moon" aria-hidden="true">☾</span>
     </button>
   </header>
 
@@ -36,120 +41,103 @@
 
   <main>
     <section class="hero section-observed" id="home" data-section="home">
-      <div class="hero-wordmark" aria-hidden="true">LichtArts<sup>®</sup></div>
-      <div class="hero-grid"></div>
-      <div class="hero-orb orb-a"></div>
-      <div class="hero-orb orb-b"></div>
+      <div class="draft-grid" aria-hidden="true"></div>
+      <span class="hero-spark spark-a" aria-hidden="true">✦</span>
+      <span class="hero-spark spark-b" aria-hidden="true">✦</span>
 
-      <div class="hero-copy hero-copy-light">
-        <p class="eyebrow">Independent visual design studio</p>
+      <div class="hero-art" aria-hidden="true">
+        <div class="hero-art-shade"></div>
+      </div>
+
+      <div class="hero-copy">
         <h1>Envision,<br />Explain,<br /><em>Evolve.</em></h1>
-        <p class="hero-description">Visual storytelling, thoughtful design, and ideas that grow. I create expressive graphic work that turns imagination into impact.</p>
-        <a class="pill-button magnetic" href="#work"><span>Explore my work</span><i>→</i></a>
-      </div>
-
-      <div class="art-stage" aria-label="Featured artwork carousel">
-        <div class="poster poster-left" data-depth="0.5">
-          <div class="poster-noise"></div><div class="portrait-shape"></div><span class="micro-copy">FORM / LIGHT / MOTION</span>
-        </div>
-        <div class="poster poster-main" data-depth="1">
-          <div class="poster-noise"></div><div class="ribbon ribbon-one"></div><div class="ribbon ribbon-two"></div><div class="planet"></div><span class="micro-copy">ENVISION — EXPLAIN — EVOLVE</span>
-        </div>
-        <div class="poster poster-right" data-depth="0.65">
-          <div class="poster-noise"></div><div class="mountain-shape"></div><div class="moon"></div><span class="micro-copy">LICHT / 03</span>
-        </div>
-      </div>
-
-      <div class="hero-bottom">
-        <div class="hero-tagline">
-          <strong>Envision. Explain. Evolve.</strong>
-          <span>Graphic design. Visual stories. Digital experiences.</span>
-          <a class="pill-button compact magnetic" href="#work"><span>Explore the gallery</span><i>→</i></a>
-        </div>
-        <div class="carousel-controls" aria-label="Hero carousel controls">
-          <div class="counter"><span id="slideNumber">01</span> / 03</div>
-          <span class="progress"><i id="progressBar"></i></span>
-          <button type="button" class="circle-button" id="prevSlide" aria-label="Previous artwork">←</button>
-          <button type="button" class="circle-button active" id="nextSlide" aria-label="Next artwork">→</button>
-        </div>
+        <p>Illustration, design, and a little imagination.</p>
+        <a class="primary-button magnetic" href="#work">
+          <span>Discover my work</span>
+          <i>→</i>
+        </a>
       </div>
     </section>
 
     <section class="work section-observed" id="work" data-section="work">
-      <div class="section-heading reveal">
-        <div class="heading-label"><span></span> Selected work</div>
-        <p>A glimpse into explorations across brand, visual systems, game art, and illustrative design.</p>
-        <button type="button" class="text-button" id="showAllWork">View all work <span>→</span></button>
+      <div class="brush-edge" aria-hidden="true"></div>
+
+      <div class="work-heading reveal">
+        <div class="work-title-line">
+          <h2>Selected Work</h2>
+          <span></span>
+        </div>
+        <p>A collection of personal projects exploring illustration, visual storytelling, and design.</p>
+        <button type="button" class="view-all" id="showAllWork">View all work <span>→</span></button>
       </div>
 
       <div class="filter-row reveal" aria-label="Project filters">
         <button class="filter active" type="button" data-filter="all">All</button>
-        <button class="filter" type="button" data-filter="identity">Identity</button>
-        <button class="filter" type="button" data-filter="editorial">Editorial</button>
-        <button class="filter" type="button" data-filter="game">Game / Digital</button>
+        <button class="filter" type="button" data-filter="illustration">Illustration</button>
+        <button class="filter" type="button" data-filter="identity">Brand &amp; Visual</button>
+        <button class="filter" type="button" data-filter="digital">Digital</button>
       </div>
 
       <div class="project-grid" id="projectGrid" aria-live="polite"></div>
     </section>
 
-    <section class="marquee" aria-label="Design disciplines">
-      <div class="marquee-track" aria-hidden="true">
-        <span>VISUAL IDENTITY</span><i>✦</i><span>GAME ART</span><i>✦</i><span>DIGITAL EXPERIENCES</span><i>✦</i><span>EDITORIAL</span><i>✦</i>
-        <span>VISUAL IDENTITY</span><i>✦</i><span>GAME ART</span><i>✦</i><span>DIGITAL EXPERIENCES</span><i>✦</i><span>EDITORIAL</span><i>✦</i>
-      </div>
-    </section>
-
     <section class="about section-observed" id="about" data-section="about">
-      <div class="about-title reveal">
-        <span class="section-kicker">02 / About LichtArts</span>
-        <h2>Designing worlds between <em>clarity</em> and <em>imagination.</em></h2>
-      </div>
-      <div class="about-layout">
-        <div class="about-art reveal" aria-hidden="true">
-          <div class="about-card card-a">L</div>
-          <div class="about-card card-b"><span>LIGHT<br/>BECOMES<br/>FORM</span></div>
-          <div class="about-ring"></div>
+      <div class="section-number reveal">02 / About LichtArts</div>
+      <div class="about-grid">
+        <div class="about-heading reveal">
+          <h2>Ideas grow when<br />visuals feel <em>alive.</em></h2>
         </div>
         <div class="about-copy reveal">
-          <p class="large-copy">LichtArts is a graphic-art and digital design practice focused on expressive visuals, interfaces, game-related artwork, and visual systems that feel memorable without becoming noisy.</p>
-          <p>My approach mixes bold typography, high-contrast composition, environmental imagery, and carefully restrained interaction. Motion is used only where it adds meaning.</p>
-          <div class="stats">
-            <div><strong>03</strong><span>Core disciplines</span></div>
-            <div><strong>∞</strong><span>Room to evolve</span></div>
+          <p class="about-lead">LichtArts is my space for illustration, graphic design, visual systems, and digital experiments — built around a love for expressive imagery and clear composition.</p>
+          <p>I like work that feels hand-crafted even when it lives on a screen: confident typography, environmental details, organic green accents, controlled motion, and a little bit of fantasy.</p>
+          <div class="about-stats">
             <div><strong>01</strong><span>Distinct visual voice</span></div>
+            <div><strong>03</strong><span>Core creative disciplines</span></div>
+            <div><strong>∞</strong><span>Room to explore</span></div>
           </div>
         </div>
       </div>
+      <div class="about-visual reveal" aria-hidden="true">
+        <span class="about-leaf leaf-one"></span>
+        <span class="about-leaf leaf-two"></span>
+        <span class="about-circle"></span>
+        <strong>LICHT</strong>
+      </div>
     </section>
 
-    <section class="process">
-      <div class="section-heading reveal">
-        <div class="heading-label"><span></span> Process</div>
-        <p>A portfolio flow inspired by editorial storytelling: strong introduction, visual proof, then detail.</p>
+    <section class="process" aria-label="Creative process">
+      <div class="section-number reveal">03 / Process</div>
+      <div class="process-intro reveal">
+        <h2>From an idea<br />to something <em>memorable.</em></h2>
+        <p>Simple steps, strong direction, and enough room for the work to surprise us.</p>
       </div>
       <div class="process-grid">
-        <article class="process-card reveal"><span>01</span><h3>Envision</h3><p>Find the concept, mood, and emotional direction before polishing the surface.</p></article>
-        <article class="process-card reveal"><span>02</span><h3>Explain</h3><p>Build a visual system that communicates clearly across screens, posts, and experiences.</p></article>
-        <article class="process-card reveal"><span>03</span><h3>Evolve</h3><p>Refine, test, and extend the idea into a flexible system that can keep growing.</p></article>
+        <article class="process-card reveal"><span>01</span><h3>Envision</h3><p>Shape the story, mood, references, and visual direction before polishing details.</p></article>
+        <article class="process-card reveal"><span>02</span><h3>Explain</h3><p>Turn the concept into a visual system that communicates clearly and consistently.</p></article>
+        <article class="process-card reveal"><span>03</span><h3>Evolve</h3><p>Refine, extend, and adapt the work until it feels complete but still alive.</p></article>
       </div>
     </section>
 
     <section class="contact section-observed" id="contact" data-section="contact">
-      <div class="contact-inner reveal">
-        <p class="section-kicker">03 / Start a conversation</p>
-        <h2>Have a visual idea?<br /><em>Let’s give it light.</em></h2>
-        <div class="contact-actions">
-          <a class="pill-button magnetic" href="https://www.behance.net/louirodila" target="_blank" rel="noreferrer"><span>View Behance</span><i>↗</i></a>
-          <a class="outline-link" href="https://www.behance.net/louirodila" target="_blank" rel="noreferrer">Behance ↗</a>
-        </div>
+      <div class="contact-copy reveal">
+        <span class="section-number">04 / Contact</span>
+        <h2>Have an idea?<br /><em>Let it grow.</em></h2>
+        <p>See more work, project studies, and visual experiments on Behance.</p>
+        <a class="primary-button magnetic" href="https://www.behance.net/louirodila" target="_blank" rel="noreferrer">
+          <span>Visit my Behance</span>
+          <i>↗</i>
+        </a>
       </div>
-      <div class="contact-sphere" aria-hidden="true"><span>L</span></div>
+      <div class="contact-mark reveal" aria-hidden="true"><span>L</span></div>
     </section>
   </main>
 
   <footer>
-    <a class="brand footer-brand" href="#home"><span class="brand-mark"><span>L</span></span><span class="brand-name">LichtArts</span></a>
-    <p>Visual storytelling / Graphic art / Digital experiences</p>
+    <a class="brand footer-brand" href="#home">
+      <span class="brand-mark" aria-hidden="true"><span>L</span></span>
+      <span class="brand-name">LichtArts</span>
+    </a>
+    <p>Illustration / Visual storytelling / Graphic design / Digital experiences</p>
     <a href="#home" class="back-top">Back to top ↑</a>
   </footer>
 
@@ -157,7 +145,7 @@
     <button class="dialog-close" type="button" aria-label="Close project">×</button>
     <div class="dialog-art" id="dialogArt"></div>
     <div class="dialog-copy">
-      <span class="section-kicker" id="dialogMeta"></span>
+      <span class="section-number" id="dialogMeta"></span>
       <h2 id="dialogTitle"></h2>
       <p id="dialogDescription"></p>
       <div class="dialog-tags" id="dialogTags"></div>
