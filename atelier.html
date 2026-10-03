@@ -69,8 +69,8 @@
       <div id="emptyInspector" class="empty-inspector">Select a layer to edit it.</div>
       <form id="inspectorForm" hidden>
         <label>Name<input id="fieldName" disabled /></label>
-        <div class="two"><label>X %<input id="fieldX" type="number" step=".1" /></label><label>Y %<input id="fieldY" type="number" step=".1" /></label></div>
-        <div class="two"><label>Width %<input id="fieldWidth" type="number" step=".1" min="1" /></label><label>Z index<input id="fieldZ" type="number" step="1" /></label></div>
+        <div class="two"><label><span id="labelX">X offset px</span><input id="fieldX" type="number" step="1" /></label><label><span id="labelY">Y offset px</span><input id="fieldY" type="number" step="1" /></label></div>
+        <div class="two"><label><span id="labelWidth">Scale %</span><input id="fieldWidth" type="number" step="1" min="5" /></label><label>Z index<input id="fieldZ" type="number" step="1" /></label></div>
         <div class="stack-actions" aria-label="Layer stacking controls">
           <button type="button" id="toFrontBtn" title="Bring to front">⇈ Front</button>
           <button type="button" id="forwardBtn" title="Bring forward one layer">↑ Forward</button>
