@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="LichtArts — visual storytelling, graphic design, and digital experiences." />
+  <meta name="theme-color" content="#061107" />
+  <title>LichtArts — Envision. Explain. Evolve.</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="site-header" id="top">
+    <a class="brand" href="#home" aria-label="LichtArts home">
+      <span class="brand-mark" aria-hidden="true"><span>L</span></span>
+      <span class="brand-name">LichtArts</span>
+    </a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a class="nav-link active" href="#work">Work</a>
+      <a class="nav-link" href="#about">About</a>
+      <a class="nav-link" href="#contact">Contact</a>
+    </nav>
+    <button class="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme">
+      <span class="theme-icon" aria-hidden="true">☼</span>
+    </button>
+  </header>
+
+  <aside class="side-rail" aria-label="Section navigation">
+    <span class="rail-line" aria-hidden="true"></span>
+    <a href="#home" class="rail-item active" data-section="home"><i></i><span><b>01</b>Home</span></a>
+    <a href="#work" class="rail-item" data-section="work"><i></i><span><b>02</b>Work</span></a>
+    <a href="#about" class="rail-item" data-section="about"><i></i><span><b>03</b>About</span></a>
+    <a href="#contact" class="rail-item" data-section="contact"><i></i><span><b>04</b>Contact</span></a>
+  </aside>
+
+  <main>
+    <section class="hero section-observed" id="home" data-section="home">
+      <div class="hero-wordmark" aria-hidden="true">LichtArts<sup>®</sup></div>
+      <div class="hero-grid"></div>
+      <div class="hero-orb orb-a"></div>
+      <div class="hero-orb orb-b"></div>
+
+      <div class="hero-copy hero-copy-light">
+        <p class="eyebrow">Independent visual design studio</p>
+        <h1>Envision,<br />Explain,<br /><em>Evolve.</em></h1>
+        <p class="hero-description">Visual storytelling, thoughtful design, and ideas that grow. I create expressive graphic work that turns imagination into impact.</p>
+        <a class="pill-button magnetic" href="#work"><span>Explore my work</span><i>→</i></a>
+      </div>
+
+      <div class="art-stage" aria-label="Featured artwork carousel">
+        <div class="poster poster-left" data-depth="0.5">
+          <div class="poster-noise"></div><div class="portrait-shape"></div><span class="micro-copy">FORM / LIGHT / MOTION</span>
+        </div>
+        <div class="poster poster-main" data-depth="1">
+          <div class="poster-noise"></div><div class="ribbon ribbon-one"></div><div class="ribbon ribbon-two"></div><div class="planet"></div><span class="micro-copy">ENVISION — EXPLAIN — EVOLVE</span>
+        </div>
+        <div class="poster poster-right" data-depth="0.65">
+          <div class="poster-noise"></div><div class="mountain-shape"></div><div class="moon"></div><span class="micro-copy">LICHT / 03</span>
+        </div>
+      </div>
+
+      <div class="hero-bottom">
+        <div class="hero-tagline">
+          <strong>Envision. Explain. Evolve.</strong>
+          <span>Graphic design. Visual stories. Digital experiences.</span>
+          <a class="pill-button compact magnetic" href="#work"><span>Explore the gallery</span><i>→</i></a>
+        </div>
+        <div class="carousel-controls" aria-label="Hero carousel controls">
+          <div class="counter"><span id="slideNumber">01</span> / 03</div>
+          <span class="progress"><i id="progressBar"></i></span>
+          <button type="button" class="circle-button" id="prevSlide" aria-label="Previous artwork">←</button>
+          <button type="button" class="circle-button active" id="nextSlide" aria-label="Next artwork">→</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="work section-observed" id="work" data-section="work">
+      <div class="section-heading reveal">
+        <div class="heading-label"><span></span> Selected work</div>
+        <p>A glimpse into explorations across brand, visual systems, game art, and illustrative design.</p>
+        <button type="button" class="text-button" id="showAllWork">View all work <span>→</span></button>
+      </div>
+
+      <div class="filter-row reveal" aria-label="Project filters">
+        <button class="filter active" type="button" data-filter="all">All</button>
+        <button class="filter" type="button" data-filter="identity">Identity</button>
+        <button class="filter" type="button" data-filter="editorial">Editorial</button>
+        <button class="filter" type="button" data-filter="game">Game / Digital</button>
+      </div>
+
+      <div class="project-grid" id="projectGrid" aria-live="polite"></div>
+    </section>
+
+    <section class="marquee" aria-label="Design disciplines">
+      <div class="marquee-track" aria-hidden="true">
+        <span>VISUAL IDENTITY</span><i>✦</i><span>GAME ART</span><i>✦</i><span>DIGITAL EXPERIENCES</span><i>✦</i><span>EDITORIAL</span><i>✦</i>
+        <span>VISUAL IDENTITY</span><i>✦</i><span>GAME ART</span><i>✦</i><span>DIGITAL EXPERIENCES</span><i>✦</i><span>EDITORIAL</span><i>✦</i>
+      </div>
+    </section>
+
+    <section class="about section-observed" id="about" data-section="about">
+      <div class="about-title reveal">
+        <span class="section-kicker">02 / About LichtArts</span>
+        <h2>Designing worlds between <em>clarity</em> and <em>imagination.</em></h2>
+      </div>
+      <div class="about-layout">
+        <div class="about-art reveal" aria-hidden="true">
+          <div class="about-card card-a">L</div>
+          <div class="about-card card-b"><span>LIGHT<br/>BECOMES<br/>FORM</span></div>
+          <div class="about-ring"></div>
+        </div>
+        <div class="about-copy reveal">
+          <p class="large-copy">LichtArts is a graphic-art and digital design practice focused on expressive visuals, interfaces, game-related artwork, and visual systems that feel memorable without becoming noisy.</p>
+          <p>My approach mixes bold typography, high-contrast composition, environmental imagery, and carefully restrained interaction. Motion is used only where it adds meaning.</p>
+          <div class="stats">
+            <div><strong>03</strong><span>Core disciplines</span></div>
+            <div><strong>∞</strong><span>Room to evolve</span></div>
+            <div><strong>01</strong><span>Distinct visual voice</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="process">
+      <div class="section-heading reveal">
+        <div class="heading-label"><span></span> Process</div>
+        <p>A portfolio flow inspired by editorial storytelling: strong introduction, visual proof, then detail.</p>
+      </div>
+      <div class="process-grid">
+        <article class="process-card reveal"><span>01</span><h3>Envision</h3><p>Find the concept, mood, and emotional direction before polishing the surface.</p></article>
+        <article class="process-card reveal"><span>02</span><h3>Explain</h3><p>Build a visual system that communicates clearly across screens, posts, and experiences.</p></article>
+        <article class="process-card reveal"><span>03</span><h3>Evolve</h3><p>Refine, test, and extend the idea into a flexible system that can keep growing.</p></article>
+      </div>
+    </section>
+
+    <section class="contact section-observed" id="contact" data-section="contact">
+      <div class="contact-inner reveal">
+        <p class="section-kicker">03 / Start a conversation</p>
+        <h2>Have a visual idea?<br /><em>Let’s give it light.</em></h2>
+        <div class="contact-actions">
+          <a class="pill-button magnetic" href="mailto:hello@lichtarts.example"><span>Start a project</span><i>↗</i></a>
+          <a class="outline-link" href="https://www.behance.net/louirodila" target="_blank" rel="noreferrer">Behance ↗</a>
+        </div>
+      </div>
+      <div class="contact-sphere" aria-hidden="true"><span>L</span></div>
+    </section>
+  </main>
+
+  <footer>
+    <a class="brand footer-brand" href="#home"><span class="brand-mark"><span>L</span></span><span class="brand-name">LichtArts</span></a>
+    <p>Visual storytelling / Graphic art / Digital experiences</p>
+    <a href="#home" class="back-top">Back to top ↑</a>
+  </footer>
+
+  <dialog class="project-dialog" id="projectDialog">
+    <button class="dialog-close" type="button" aria-label="Close project">×</button>
+    <div class="dialog-art" id="dialogArt"></div>
+    <div class="dialog-copy">
+      <span class="section-kicker" id="dialogMeta"></span>
+      <h2 id="dialogTitle"></h2>
+      <p id="dialogDescription"></p>
+      <div class="dialog-tags" id="dialogTags"></div>
+    </div>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
