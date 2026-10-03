@@ -261,7 +261,11 @@ html[data-theme="dark"] .theme-track i{transform:translateX(20px)}
   image-rendering:auto;
   user-select:none;
   -webkit-user-drag:none;
-  transform:translate3d(var(--layer-x,0),var(--layer-y,0),0);
+  transform:
+    translate3d(var(--layer-x,0px),var(--layer-y,0px),0)
+    translate3d(var(--cms-x,0px),var(--cms-y,0px),0)
+    rotate(var(--cms-rotate,0deg))
+    scale(var(--cms-scale-x,1),var(--cms-scale-y,1));
   transform-origin:center;
   will-change:transform;
 }
@@ -820,7 +824,7 @@ footer{
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}
   .reveal{opacity:1;transform:none}
-  .scene-img[data-depth]{transform:none!important}
+  .scene-img[data-depth]{--layer-x:0px!important;--layer-y:0px!important}
 }
 
 .cms-custom-element{position:absolute;display:block;max-width:none;transform-origin:center;pointer-events:none}
