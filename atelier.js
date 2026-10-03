@@ -98,11 +98,10 @@
     const el = doc?.querySelector('[data-editor-key="' + CSS.escape(key) + '"]');
     if (!el) return { mode:'offset', dx:0, dy:0, scale:1, opacity:1, z:5, rotation:0, visible:true };
     const cs = preview.contentWindow.getComputedStyle(el);
-    const isTitle = key === 'heroTitle';
     let text = '';
-    if (isTitle) text = el.innerText.trim();
-    else if (el.matches('a')) text = el.querySelector('span')?.textContent || el.textContent || '';
-    else if (!el.querySelector('img')) text = el.textContent?.trim() || '';
+    if (key === 'heroTitle') text = el.innerText.trim();
+    else if (key === 'heroSubtitle') text = el.textContent?.trim() || '';
+    else if (key === 'heroButton') text = el.querySelector('span')?.textContent || el.textContent || '';
     return {
       mode: 'offset',
       dx: 0,
@@ -139,6 +138,15 @@
       delete config.managed[key].y;
       delete config.managed[key].width;
     }
+
+    const editableTextKeys = new Set(['heroTitle', 'heroSubtitle', 'heroButton']);
+    if (!editableTextKeys.has(key)) {
+      delete config.managed[key].text;
+      delete config.managed[key].href;
+    } else if (key !== 'heroButton') {
+      delete config.managed[key].href;
+    }
+
     return config.managed[key];
   }
 
