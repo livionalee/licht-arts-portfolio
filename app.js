@@ -197,6 +197,7 @@ window.addEventListener('scroll', () => {
 
 if (!prefersReducedMotion && window.matchMedia('(pointer:fine)').matches) {
   const hero = document.querySelector('.hero');
+  const layers = [...hero.querySelectorAll('.hero-layer')];
   let frame = 0;
 
   hero.addEventListener('pointermove', event => {
@@ -204,17 +205,26 @@ if (!prefersReducedMotion && window.matchMedia('(pointer:fine)').matches) {
 
     frame = requestAnimationFrame(() => {
       const rect = hero.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width - 0.5) * -12;
-      const y = ((event.clientY - rect.top) / rect.height - 0.5) * -8;
-      hero.style.setProperty('--art-x', `${x}px`);
-      hero.style.setProperty('--art-y', `${y}px`);
+      const nx = (event.clientX - rect.left) / rect.width - 0.5;
+      const ny = (event.clientY - rect.top) / rect.height - 0.5;
+
+      layers.forEach(layer => {
+        const depth = Number(layer.dataset.depth || 0.25);
+        const x = nx * -28 * depth;
+        const y = ny * -20 * depth;
+        layer.style.setProperty('--layer-x', `${x}px`);
+        layer.style.setProperty('--layer-y', `${y}px`);
+      });
+
       frame = 0;
     });
   });
 
   hero.addEventListener('pointerleave', () => {
-    hero.style.setProperty('--art-x', '0px');
-    hero.style.setProperty('--art-y', '0px');
+    layers.forEach(layer => {
+      layer.style.setProperty('--layer-x', '0px');
+      layer.style.setProperty('--layer-y', '0px');
+    });
   });
 }
 
