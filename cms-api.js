@@ -1,0 +1,1 @@
+window.LICHT_CMS_API = "https://euyihmmuccqhlmcmgdjk.supabase.co/functions/v1/licht-cms";
