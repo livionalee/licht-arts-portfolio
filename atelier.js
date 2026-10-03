@@ -37,6 +37,13 @@
     heroCopy:'Hero copy group', heroTitle:'Hero headline', heroSubtitle:'Hero subtitle', heroButton:'Hero CTA'
   };
 
+  function withTimeout(promise, ms = 12000) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Login timed out. Please try again.')), ms))
+    ]);
+  }
+
   async function apiCall(body, auth = true) {
     const headers = { 'content-type':'application/json' };
     if (auth && session?.access_token) headers.authorization = 'Bearer ' + session.access_token;
@@ -525,13 +532,23 @@
 
   loginForm.addEventListener('submit', async e => {
     e.preventDefault();
+    const submit = loginForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    submit.textContent = 'Signing in…';
     loginStatus.textContent = 'Signing in…';
     try {
-      session = await apiCall({ action:'login', email:$('#email').value, password:$('#password').value }, false);
+      session = await withTimeout(apiCall({ action:'login', email:$('#email').value, password:$('#password').value }, false));
       localStorage.setItem('licht-atelier-session', JSON.stringify(session));
-      loginScreen.hidden = true; editorShell.hidden = false;
+      loginScreen.hidden = true;
+      editorShell.hidden = false;
+      loginStatus.textContent = '';
       await loadDraft();
-    } catch (err) { loginStatus.textContent = err.message; }
+    } catch (err) {
+      loginStatus.textContent = err.message || 'Login failed.';
+    } finally {
+      submit.disabled = false;
+      submit.textContent = 'Sign in';
+    }
   });
 
   $('#saveBtn').onclick = () => saveDraft().catch(e => setStatus(e.message));
