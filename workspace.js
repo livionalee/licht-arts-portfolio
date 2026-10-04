@@ -13,6 +13,9 @@
   let adminProjects = [];
   let activeProjectId = null;
   let projectDirty = false;
+  let projectBlocks = [];
+  let activeBuilderRange = null;
+  let draggedBlockId = null;
 
   let session = JSON.parse(localStorage.getItem('licht-atelier-session') || 'null');
 
@@ -123,7 +126,7 @@
     template.innerHTML = String(value || '');
 
     const allowedTags = new Set([
-      'P','BR','STRONG','B','EM','I','U','H2','H3',
+      'P','BR','STRONG','B','EM','I','U','H2','H3','HR',
       'UL','OL','LI','BLOCKQUOTE','A','IMG','DIV'
     ]);
 
@@ -138,6 +141,8 @@
         const allowed =
           (node.tagName === 'A' && ['href','target','rel'].includes(name)) ||
           (node.tagName === 'IMG' && ['src','alt'].includes(name)) ||
+          (node.tagName === 'DIV' && name === 'data-project-grid') ||
+          (node.tagName === 'BLOCKQUOTE' && name === 'data-project-embed') ||
           (name === 'style' && ['P','DIV','H2','H3','BLOCKQUOTE'].includes(node.tagName));
 
         if (!allowed) node.removeAttribute(attribute.name);
@@ -175,64 +180,196 @@
     return template.innerHTML;
   }
 
-  function contentToEditorHtml(value) {
+  function blockId() {
+    return 'block-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8);
+  }
+
+  function defaultTextBlock(html = '<p>Write your project story here…</p>') {
+    return { id:blockId(), type:'text', html };
+  }
+
+  function contentToBlocks(value) {
     const raw = String(value || '').trim();
-    if (!raw) return '';
-    if (/<[a-z][\s\S]*>/i.test(raw)) return sanitizeEditorHtml(raw);
+    if (!raw) return [defaultTextBlock()];
 
-    return raw
-      .split(/\n{2,}/)
-      .map(block => '<p>' + escapeHtml(block).replace(/\n/g,'<br>') + '</p>')
-      .join('');
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = sanitizeEditorHtml(raw);
+
+    const blocks = [];
+
+    [...wrapper.childNodes].forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) return;
+
+      if (node.nodeType === Node.ELEMENT_NODE && node.matches('img')) {
+        blocks.push({
+          id:blockId(),
+          type:'image',
+          src:node.getAttribute('src') || '',
+          alt:node.getAttribute('alt') || ''
+        });
+        return;
+      }
+
+      if (node.nodeType === Node.ELEMENT_NODE && node.matches('[data-project-grid]')) {
+        blocks.push({
+          id:blockId(),
+          type:'grid',
+          images:[...node.querySelectorAll('img')].map(img => ({
+            src:img.getAttribute('src') || '',
+            alt:img.getAttribute('alt') || ''
+          })).filter(image => image.src)
+        });
+        return;
+      }
+
+      if (node.nodeType === Node.ELEMENT_NODE && node.matches('hr')) {
+        blocks.push({ id:blockId(), type:'divider' });
+        return;
+      }
+
+      if (node.nodeType === Node.ELEMENT_NODE && node.matches('blockquote[data-project-embed]')) {
+        const link = node.querySelector('a');
+        blocks.push({
+          id:blockId(),
+          type:'embed',
+          url:link?.getAttribute('href') || '',
+          label:link?.textContent?.trim() || link?.getAttribute('href') || ''
+        });
+        return;
+      }
+
+      const holder = document.createElement('div');
+      holder.append(node.cloneNode(true));
+      blocks.push(defaultTextBlock(holder.innerHTML));
+    });
+
+    return blocks.length ? blocks : [defaultTextBlock()];
   }
 
-  let savedEditorRange = null;
+  function blocksToHtml() {
+    return projectBlocks.map(block => {
+      if (block.type === 'text') {
+        return sanitizeEditorHtml(block.html || '');
+      }
 
-  function saveEditorSelection() {
-    const editor = $('#projectContent');
-    const selection = window.getSelection();
-    if (!editor || !selection?.rangeCount) return;
-    const range = selection.getRangeAt(0);
-    if (editor.contains(range.commonAncestorContainer)) savedEditorRange = range.cloneRange();
+      if (block.type === 'image') {
+        if (!block.src) return '';
+        return '<img src="' + escapeHtml(block.src) + '" alt="' + escapeHtml(block.alt || '') + '">';
+      }
+
+      if (block.type === 'grid') {
+        const images = (block.images || []).filter(image => image.src);
+        if (!images.length) return '';
+        return '<div data-project-grid="' + Math.min(3, Math.max(1, images.length)) + '">' +
+          images.map(image => '<img src="' + escapeHtml(image.src) + '" alt="' + escapeHtml(image.alt || '') + '">').join('') +
+          '</div>';
+      }
+
+      if (block.type === 'divider') {
+        return '<hr>';
+      }
+
+      if (block.type === 'embed') {
+        if (!block.url) return '';
+        return '<blockquote data-project-embed="1"><a href="' + escapeHtml(block.url) + '">' +
+          escapeHtml(block.label || block.url) + '</a></blockquote>';
+      }
+
+      return '';
+    }).join('\n');
   }
 
-  function restoreEditorSelection() {
-    const editor = $('#projectContent');
-    if (!editor) return;
-    editor.focus();
+  function builderBlockLabel(type) {
+    return ({text:'TEXT',image:'IMAGE',grid:'PHOTO GRID',divider:'DIVIDER',embed:'EMBED / LINK'})[type] || type.toUpperCase();
+  }
 
-    if (savedEditorRange) {
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(savedEditorRange);
+  function renderProjectBlocks() {
+    const canvas = $('#projectContent');
+    if (!canvas) return;
+
+    canvas.innerHTML = projectBlocks.map(block => {
+      let body = '';
+
+      if (block.type === 'text') {
+        body = '<div class="builder-text-toolbar" role="toolbar">' +
+          '<button type="button" data-builder-command="bold"><b>B</b></button>' +
+          '<button type="button" data-builder-command="italic"><i>I</i></button>' +
+          '<button type="button" data-builder-block="h2">H₂</button>' +
+          '<button type="button" data-builder-block="h3">H₃</button>' +
+          '<button type="button" data-builder-command="insertUnorderedList">• List</button>' +
+          '<button type="button" data-builder-link>↗ Link</button>' +
+          '</div>' +
+          '<div class="builder-text-editor" contenteditable="true" data-block-text>' +
+          (block.html || '<p><br></p>') +
+          '</div>';
+      } else if (block.type === 'image') {
+        body = '<div class="builder-image-frame">' +
+          (block.src ? '<img src="' + escapeHtml(block.src) + '" alt="' + escapeHtml(block.alt || '') + '">' : '<span>No image</span>') +
+          '</div>';
+      } else if (block.type === 'grid') {
+        body = '<div class="builder-photo-grid">' +
+          (block.images || []).map(image => '<img src="' + escapeHtml(image.src) + '" alt="' + escapeHtml(image.alt || '') + '">').join('') +
+          '</div>';
+      } else if (block.type === 'divider') {
+        body = '<div class="builder-divider"><span></span></div>';
+      } else if (block.type === 'embed') {
+        body = '<a class="builder-embed-card" href="' + escapeHtml(block.url || '#') + '" target="_blank" rel="noopener noreferrer">' +
+          '<span>&lt;/&gt;</span><div><strong>' + escapeHtml(block.label || 'Embedded link') + '</strong><small>' + escapeHtml(block.url || '') + '</small></div>' +
+          '</a>';
+      }
+
+      return '<section class="builder-block" draggable="true" data-block-id="' + block.id + '">' +
+        '<div class="builder-block-head">' +
+          '<span class="builder-drag" title="Drag to reorder">⋮⋮</span>' +
+          '<b>' + builderBlockLabel(block.type) + '</b>' +
+          '<div class="builder-block-actions">' +
+            '<button type="button" data-block-up title="Move up">↑</button>' +
+            '<button type="button" data-block-down title="Move down">↓</button>' +
+            '<button type="button" data-block-delete title="Delete">×</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="builder-block-body">' + body + '</div>' +
+      '</section>';
+    }).join('');
+
+    if (!projectBlocks.length) {
+      canvas.innerHTML = '<div class="builder-empty">Add content from the panel on the right.</div>';
     }
   }
 
-  function runEditorCommand(command, value = null) {
-    const editor = $('#projectContent');
-    if (!editor) return;
-
-    restoreEditorSelection();
-
-    try {
-      const supported = typeof document.queryCommandSupported !== 'function' || document.queryCommandSupported(command);
-      if (!supported) throw new Error('Unsupported editor command: ' + command);
-      document.execCommand(command, false, value);
-    } catch (error) {
-      console.error('Rich editor command failed:', command, error);
-      $('#projectSaveStatus').textContent = 'Formatting command failed';
-      return;
-    }
-
-    editor.focus();
-    saveEditorSelection();
+  function markBuilderDirty() {
     markProjectDirty();
+    $('#projectSaveStatus').textContent = 'Unsaved content changes';
   }
 
-  async function uploadInlineImage(file) {
-    if (!file) return;
-    $('#projectSaveStatus').textContent = 'Uploading content image…';
+  function moveBlock(id, delta) {
+    const index = projectBlocks.findIndex(block => block.id === id);
+    if (index < 0) return;
+    const target = index + delta;
+    if (target < 0 || target >= projectBlocks.length) return;
+    [projectBlocks[index], projectBlocks[target]] = [projectBlocks[target], projectBlocks[index]];
+    renderProjectBlocks();
+    markBuilderDirty();
+  }
 
+  function deleteBlock(id) {
+    projectBlocks = projectBlocks.filter(block => block.id !== id);
+    if (!projectBlocks.length) projectBlocks.push(defaultTextBlock());
+    renderProjectBlocks();
+    markBuilderDirty();
+  }
+
+  function addBlock(block) {
+    projectBlocks.push({ id:blockId(), ...block });
+    renderProjectBlocks();
+    markBuilderDirty();
+    requestAnimationFrame(() => {
+      const last = $('#projectContent .builder-block:last-child');
+      last?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    });
+  }
+
+  async function uploadBuilderFile(file) {
     const base64 = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
@@ -247,17 +384,56 @@
       base64
     });
 
-    restoreEditorSelection();
-    document.execCommand(
-      'insertHTML',
-      false,
-      '<p><img src="' + escapeHtml(result.url) + '" alt="' + escapeHtml(file.name) + '"></p><p><br></p>'
-    );
-    saveEditorSelection();
-    markProjectDirty();
-    $('#projectSaveStatus').textContent = 'Image inserted · unsaved changes';
+    return result.url;
   }
 
+  async function addImageFiles(files, asGrid = false) {
+    const list = [...(files || [])];
+    if (!list.length) return;
+
+    $('#projectSaveStatus').textContent = 'Uploading project media…';
+    const uploaded = [];
+
+    for (const file of list) {
+      uploaded.push({
+        src:await uploadBuilderFile(file),
+        alt:file.name
+      });
+    }
+
+    if (asGrid) addBlock({ type:'grid', images:uploaded });
+    else addBlock({ type:'image', src:uploaded[0].src, alt:uploaded[0].alt });
+
+    $('#projectSaveStatus').textContent = 'Media inserted · unsaved changes';
+  }
+
+  function saveBuilderSelection(editor) {
+    const selection = window.getSelection();
+    if (!editor || !selection?.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) {
+      activeBuilderRange = { editor, range:range.cloneRange() };
+    }
+  }
+
+  function runBuilderCommand(editor, command, value = null) {
+    if (!editor) return;
+    editor.focus();
+
+    if (activeBuilderRange?.editor === editor) {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(activeBuilderRange.range);
+    }
+
+    document.execCommand(command, false, value);
+    saveBuilderSelection(editor);
+
+    const id = editor.closest('[data-block-id]')?.dataset.blockId;
+    const block = projectBlocks.find(item => item.id === id);
+    if (block) block.html = sanitizeEditorHtml(editor.innerHTML);
+    markBuilderDirty();
+  }
 
   function openProjectEditor(id) {
     const project = adminProjects.find(item => item.id === id);
@@ -272,7 +448,8 @@
     $('#projectCategory').value = project.category || '';
     $('#projectSortOrder').value = project.sort_order ?? 0;
     $('#projectExcerpt').value = project.excerpt || project.description || '';
-    $('#projectContent').innerHTML = contentToEditorHtml(project.content || project.description || '');
+    projectBlocks = contentToBlocks(project.content || project.description || '');
+    renderProjectBlocks();
     $('#projectTags').value = (project.tags || []).join(', ');
     $('#projectCover').value = project.cover || '';
     $('#projectBehance').value = project.behance_url || '';
@@ -295,7 +472,8 @@
     $('#projectCategory').value = 'Graphic Design';
     $('#projectSortOrder').value = adminProjects.length;
     $('#projectExcerpt').value = '';
-    $('#projectContent').innerHTML = '';
+    projectBlocks = [defaultTextBlock()];
+    renderProjectBlocks();
     $('#projectTags').value = '';
     $('#projectCover').value = '';
     $('#projectBehance').value = '';
@@ -316,7 +494,7 @@
       category: $('#projectCategory').value.trim() || 'Graphic Design',
       sort_order: Number($('#projectSortOrder').value || 0),
       excerpt: $('#projectExcerpt').value.trim(),
-      content: sanitizeEditorHtml($('#projectContent').innerHTML),
+      content: blocksToHtml(),
       description: $('#projectExcerpt').value.trim(),
       tags: $('#projectTags').value.split(',').map(tag => tag.trim()).filter(Boolean),
       cover: $('#projectCover').value.trim(),
@@ -495,58 +673,145 @@
     field.addEventListener('input', markProjectDirty);
   });
 
-  $('#projectContent')?.addEventListener('input', () => {
-    saveEditorSelection();
-    markProjectDirty();
+  $('#projectContent')?.addEventListener('input', event => {
+    const editor = event.target.closest('[data-block-text]');
+    if (!editor) return;
+    const id = editor.closest('[data-block-id]')?.dataset.blockId;
+    const block = projectBlocks.find(item => item.id === id);
+    if (block) block.html = sanitizeEditorHtml(editor.innerHTML);
+    saveBuilderSelection(editor);
+    markBuilderDirty();
   });
-  $('#projectContent')?.addEventListener('keyup', saveEditorSelection);
-  $('#projectContent')?.addEventListener('mouseup', saveEditorSelection);
 
-  const richToolbar = $('.rich-editor-toolbar');
+  $('#projectContent')?.addEventListener('mouseup', event => {
+    const editor = event.target.closest('[data-block-text]');
+    if (editor) saveBuilderSelection(editor);
+  });
 
-  richToolbar?.addEventListener('mousedown', event => {
-    const button = event.target.closest('button');
-    if (!button || !richToolbar.contains(button)) return;
+  $('#projectContent')?.addEventListener('keyup', event => {
+    const editor = event.target.closest('[data-block-text]');
+    if (editor) saveBuilderSelection(editor);
+  });
 
-    // Keep the current text selection alive when the toolbar receives focus.
-    saveEditorSelection();
+  $('#projectContent')?.addEventListener('mousedown', event => {
+    const toolbarButton = event.target.closest('.builder-text-toolbar button');
+    if (!toolbarButton) return;
+    const editor = toolbarButton.closest('[data-block-id]')?.querySelector('[data-block-text]');
+    if (editor) saveBuilderSelection(editor);
     event.preventDefault();
   });
 
-  richToolbar?.addEventListener('click', event => {
-    const button = event.target.closest('button');
-    if (!button || !richToolbar.contains(button)) return;
+  $('#projectContent')?.addEventListener('click', event => {
+    const blockElement = event.target.closest('[data-block-id]');
+    if (!blockElement) return;
+    const id = blockElement.dataset.blockId;
 
-    const command = button.dataset.editorCommand;
-    const block = button.dataset.editorBlock;
-
-    if (command) {
-      runEditorCommand(command);
+    if (event.target.closest('[data-block-up]')) {
+      moveBlock(id,-1);
       return;
     }
 
-    if (block) {
-      runEditorCommand('formatBlock', block.toUpperCase());
+    if (event.target.closest('[data-block-down]')) {
+      moveBlock(id,1);
       return;
     }
 
-    if (button.id === 'projectInsertLink') {
+    if (event.target.closest('[data-block-delete]')) {
+      deleteBlock(id);
+      return;
+    }
+
+    const editor = blockElement.querySelector('[data-block-text]');
+    const commandButton = event.target.closest('[data-builder-command]');
+    const blockButton = event.target.closest('[data-builder-block]');
+
+    if (commandButton && editor) {
+      runBuilderCommand(editor, commandButton.dataset.builderCommand);
+      return;
+    }
+
+    if (blockButton && editor) {
+      runBuilderCommand(editor, 'formatBlock', blockButton.dataset.builderBlock.toUpperCase());
+      return;
+    }
+
+    if (event.target.closest('[data-builder-link]') && editor) {
       const href = prompt('Enter link URL');
-      if (!href) return;
-      runEditorCommand('createLink', href);
-      return;
-    }
-
-    if (button.id === 'projectInsertImage') {
-      $('#projectInlineImageInput')?.click();
+      if (href) runBuilderCommand(editor, 'createLink', href);
     }
   });
 
-  $('#projectInlineImageInput')?.addEventListener('change', () => {
-    const file = $('#projectInlineImageInput').files?.[0];
-    uploadInlineImage(file)
+  $('#projectContent')?.addEventListener('dragstart', event => {
+    const block = event.target.closest('[data-block-id]');
+    if (!block) return;
+    draggedBlockId = block.dataset.blockId;
+    block.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+  });
+
+  $('#projectContent')?.addEventListener('dragend', event => {
+    event.target.closest('[data-block-id]')?.classList.remove('dragging');
+    draggedBlockId = null;
+  });
+
+  $('#projectContent')?.addEventListener('dragover', event => {
+    if (!draggedBlockId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  });
+
+  $('#projectContent')?.addEventListener('drop', event => {
+    if (!draggedBlockId) return;
+    event.preventDefault();
+    const target = event.target.closest('[data-block-id]');
+    if (!target || target.dataset.blockId === draggedBlockId) return;
+
+    const from = projectBlocks.findIndex(block => block.id === draggedBlockId);
+    const to = projectBlocks.findIndex(block => block.id === target.dataset.blockId);
+    if (from < 0 || to < 0) return;
+
+    const [moved] = projectBlocks.splice(from,1);
+    projectBlocks.splice(to,0,moved);
+    renderProjectBlocks();
+    markBuilderDirty();
+  });
+
+  $$('[data-add-project-block]').forEach(button => {
+    button.addEventListener('click', () => {
+      const type = button.dataset.addProjectBlock;
+
+      if (type === 'text') {
+        addBlock({ type:'text', html:'<p>Write your project story here…</p>' });
+      } else if (type === 'divider') {
+        addBlock({ type:'divider' });
+      } else if (type === 'image') {
+        $('#builderImageInput')?.click();
+      } else if (type === 'grid') {
+        $('#builderGridInput')?.click();
+      } else if (type === 'embed') {
+        const url = prompt('Paste a URL to add as an embed/link block');
+        if (!url) return;
+        let label = url;
+        try { label = new URL(url).hostname.replace(/^www\./,''); } catch {}
+        addBlock({ type:'embed', url, label });
+      }
+    });
+  });
+
+  $('#builderAddTextBottom')?.addEventListener('click', () => {
+    addBlock({ type:'text', html:'<p>Write your project story here…</p>' });
+  });
+
+  $('#builderImageInput')?.addEventListener('change', () => {
+    addImageFiles($('#builderImageInput').files, false)
       .catch(error => $('#projectSaveStatus').textContent = error.message);
-    $('#projectInlineImageInput').value = '';
+    $('#builderImageInput').value = '';
+  });
+
+  $('#builderGridInput')?.addEventListener('change', () => {
+    addImageFiles($('#builderGridInput').files, true)
+      .catch(error => $('#projectSaveStatus').textContent = error.message);
+    $('#builderGridInput').value = '';
   });
 
   async function boot() {
