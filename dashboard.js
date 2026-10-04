@@ -118,6 +118,133 @@
     preview.innerHTML = value ? '' : '<span>No cover</span>';
   }
 
+  function sanitizeEditorHtml(value) {
+    const template = document.createElement('template');
+    template.innerHTML = String(value || '');
+
+    const allowedTags = new Set([
+      'P','BR','STRONG','B','EM','I','U','H2','H3',
+      'UL','OL','LI','BLOCKQUOTE','A','IMG','DIV'
+    ]);
+
+    [...template.content.querySelectorAll('*')].forEach(node => {
+      if (!allowedTags.has(node.tagName)) {
+        node.replaceWith(...node.childNodes);
+        return;
+      }
+
+      [...node.attributes].forEach(attribute => {
+        const name = attribute.name.toLowerCase();
+        const allowed =
+          (node.tagName === 'A' && ['href','target','rel'].includes(name)) ||
+          (node.tagName === 'IMG' && ['src','alt'].includes(name)) ||
+          (name === 'style' && ['P','DIV','H2','H3','BLOCKQUOTE'].includes(node.tagName));
+
+        if (!allowed) node.removeAttribute(attribute.name);
+      });
+
+      if (node.hasAttribute('style')) {
+        const align = node.style.textAlign;
+        node.removeAttribute('style');
+        if (['left','center','right'].includes(align)) node.style.textAlign = align;
+      }
+
+      if (node.tagName === 'A') {
+        const href = node.getAttribute('href') || '';
+        try {
+          const parsed = new URL(href, location.href);
+          if (!['http:','https:','mailto:'].includes(parsed.protocol)) node.removeAttribute('href');
+        } catch {
+          node.removeAttribute('href');
+        }
+        node.setAttribute('rel','noopener noreferrer');
+        node.setAttribute('target','_blank');
+      }
+
+      if (node.tagName === 'IMG') {
+        const src = node.getAttribute('src') || '';
+        try {
+          const parsed = new URL(src, location.href);
+          if (!['http:','https:'].includes(parsed.protocol)) node.remove();
+        } catch {
+          node.remove();
+        }
+      }
+    });
+
+    return template.innerHTML;
+  }
+
+  function contentToEditorHtml(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (/<[a-z][\s\S]*>/i.test(raw)) return sanitizeEditorHtml(raw);
+
+    return raw
+      .split(/\n{2,}/)
+      .map(block => '<p>' + escapeHtml(block).replace(/\n/g,'<br>') + '</p>')
+      .join('');
+  }
+
+  let savedEditorRange = null;
+
+  function saveEditorSelection() {
+    const editor = $('#projectContent');
+    const selection = window.getSelection();
+    if (!editor || !selection?.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) savedEditorRange = range.cloneRange();
+  }
+
+  function restoreEditorSelection() {
+    const editor = $('#projectContent');
+    if (!editor) return;
+    editor.focus();
+
+    if (savedEditorRange) {
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(savedEditorRange);
+    }
+  }
+
+  function runEditorCommand(command, value = null) {
+    restoreEditorSelection();
+    document.execCommand(command, false, value);
+    saveEditorSelection();
+    markProjectDirty();
+  }
+
+  async function uploadInlineImage(file) {
+    if (!file) return;
+    $('#projectSaveStatus').textContent = 'Uploading content image…';
+
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const result = await apiCall({
+      action:'upload',
+      name:file.name,
+      contentType:file.type,
+      base64
+    });
+
+    restoreEditorSelection();
+    document.execCommand(
+      'insertHTML',
+      false,
+      '<p><img src="' + escapeHtml(result.url) + '" alt="' + escapeHtml(file.name) + '"></p><p><br></p>'
+    );
+    saveEditorSelection();
+    markProjectDirty();
+    $('#projectSaveStatus').textContent = 'Image inserted · unsaved changes';
+  }
+
+
   function openProjectEditor(id) {
     const project = adminProjects.find(item => item.id === id);
     if (!project) return;
@@ -131,7 +258,7 @@
     $('#projectCategory').value = project.category || '';
     $('#projectSortOrder').value = project.sort_order ?? 0;
     $('#projectExcerpt').value = project.excerpt || project.description || '';
-    $('#projectContent').value = project.content || project.description || '';
+    $('#projectContent').innerHTML = contentToEditorHtml(project.content || project.description || '');
     $('#projectTags').value = (project.tags || []).join(', ');
     $('#projectCover').value = project.cover || '';
     $('#projectBehance').value = project.behance_url || '';
@@ -154,7 +281,7 @@
     $('#projectCategory').value = 'Graphic Design';
     $('#projectSortOrder').value = adminProjects.length;
     $('#projectExcerpt').value = '';
-    $('#projectContent').value = '';
+    $('#projectContent').innerHTML = '';
     $('#projectTags').value = '';
     $('#projectCover').value = '';
     $('#projectBehance').value = '';
@@ -175,7 +302,7 @@
       category: $('#projectCategory').value.trim() || 'Graphic Design',
       sort_order: Number($('#projectSortOrder').value || 0),
       excerpt: $('#projectExcerpt').value.trim(),
-      content: $('#projectContent').value,
+      content: sanitizeEditorHtml($('#projectContent').innerHTML),
       description: $('#projectExcerpt').value.trim(),
       tags: $('#projectTags').value.split(',').map(tag => tag.trim()).filter(Boolean),
       cover: $('#projectCover').value.trim(),
@@ -352,6 +479,42 @@
   $('#projectForm')?.querySelectorAll('input,textarea').forEach(field => {
     if (field.id === 'projectCover') return;
     field.addEventListener('input', markProjectDirty);
+  });
+
+  $('#projectContent')?.addEventListener('input', () => {
+    saveEditorSelection();
+    markProjectDirty();
+  });
+  $('#projectContent')?.addEventListener('keyup', saveEditorSelection);
+  $('#projectContent')?.addEventListener('mouseup', saveEditorSelection);
+
+  $('.rich-editor-toolbar [data-editor-command]').forEach(button => {
+    button.addEventListener('mousedown', event => event.preventDefault());
+    button.addEventListener('click', () => runEditorCommand(button.dataset.editorCommand));
+  });
+
+  $('.rich-editor-toolbar [data-editor-block]').forEach(button => {
+    button.addEventListener('mousedown', event => event.preventDefault());
+    button.addEventListener('click', () => runEditorCommand('formatBlock', button.dataset.editorBlock));
+  });
+
+  $('#projectInsertLink')?.addEventListener('mousedown', event => event.preventDefault());
+  $('#projectInsertLink')?.addEventListener('click', () => {
+    saveEditorSelection();
+    const href = prompt('Enter link URL');
+    if (!href) return;
+    runEditorCommand('createLink', href);
+  });
+
+  $('#projectInsertImage')?.addEventListener('mousedown', event => {
+    event.preventDefault();
+    saveEditorSelection();
+  });
+  $('#projectInsertImage')?.addEventListener('click', () => $('#projectInlineImageInput').click());
+  $('#projectInlineImageInput')?.addEventListener('change', () => {
+    uploadInlineImage($('#projectInlineImageInput').files?.[0])
+      .catch(error => $('#projectSaveStatus').textContent = error.message);
+    $('#projectInlineImageInput').value = '';
   });
 
   async function boot() {
