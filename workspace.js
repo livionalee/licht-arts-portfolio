@@ -4,11 +4,11 @@
   const $$ = selector => [...document.querySelectorAll(selector)];
 
   const login = $('#dashLogin');
-  const shell = $('#dashboardShell');
+  const shell = $('#workspaceShell');
   const loginForm = $('#dashLoginForm');
   const loginStatus = $('#dashLoginStatus');
   const syncPill = $('#syncPill');
-  const title = $('#dashboardTitle');
+  const title = $('#workspaceTitle');
 
   let adminProjects = [];
   let activeProjectId = null;
@@ -56,7 +56,7 @@
   function setTab(name) {
     $$('.dash-tab[data-tab]').forEach(button => button.classList.toggle('active', button.dataset.tab === name));
     $$('.dash-view').forEach(view => view.classList.toggle('active', view.dataset.view === name));
-    title.textContent = ({overview:'Overview',projects:'Projects',media:'Media',settings:'Site Settings'})[name] || 'Dashboard';
+    title.textContent = ({overview:'Overview',projects:'Projects',media:'Media',settings:'Site Settings'})[name] || 'Workspace';
     history.replaceState(null, '', '#' + name);
   }
 
@@ -400,7 +400,7 @@
     $('#projectSaveStatus').textContent = 'Cover uploaded · unsaved changes';
   }
 
-  async function hydrateDashboard() {
+  async function hydrateWorkspace() {
     syncPill.classList.remove('ok');
     syncPill.innerHTML = '<i></i>Checking…';
 
@@ -456,7 +456,7 @@
       localStorage.setItem('licht-atelier-session', JSON.stringify(session));
       login.hidden = true;
       shell.hidden = false;
-      await hydrateDashboard();
+      await hydrateWorkspace();
     } catch (error) {
       loginStatus.textContent = error.message || 'Login failed.';
     } finally {
@@ -537,7 +537,7 @@
     try {
       login.hidden = true;
       shell.hidden = false;
-      await hydrateDashboard();
+      await hydrateWorkspace();
     } catch {
       localStorage.removeItem('licht-atelier-session');
       session = null;
