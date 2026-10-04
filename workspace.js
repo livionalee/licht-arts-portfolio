@@ -775,6 +775,214 @@
   }
 
   let workspaceToastTimer = 0;
+  let homeCropState = {
+    file:null,
+    targetId:null,
+    image:null,
+    objectUrl:'',
+    ratio:0.8,
+    zoom:1,
+    panX:0,
+    panY:0,
+    dragging:false,
+    pointerId:null,
+    lastX:0,
+    lastY:0
+  };
+
+  function cropTargetLabel(targetId) {
+    return ({
+      homeEnvisionImage:'Envision',
+      homeExplainImage:'Explain',
+      homeEvolveImage:'Evolve',
+      homeContactMarkImage:'Contact artwork'
+    })[targetId] || 'Image';
+  }
+
+  function homeCropCanvas() {
+    return document.getElementById('homeCropCanvas');
+  }
+
+  function homeCropRatioValue(key) {
+    if (key === 'original') {
+      const image = homeCropState.image;
+      return image?.naturalWidth && image?.naturalHeight
+        ? image.naturalWidth / image.naturalHeight
+        : 0.8;
+    }
+    const value = Number(key);
+    return Number.isFinite(value) && value > 0 ? value : 0.8;
+  }
+
+  function sizeHomeCropCanvas(ratio) {
+    const canvas = homeCropCanvas();
+    if (!canvas) return;
+
+    const maxSide = 1100;
+    if (ratio >= 1) {
+      canvas.width = maxSide;
+      canvas.height = Math.max(1,Math.round(maxSide / ratio));
+    } else {
+      canvas.height = maxSide;
+      canvas.width = Math.max(1,Math.round(maxSide * ratio));
+    }
+  }
+
+  function clampHomeCropPan() {
+    const canvas = homeCropCanvas();
+    const image = homeCropState.image;
+    if (!canvas || !image) return;
+
+    const baseScale = Math.max(
+      canvas.width / image.naturalWidth,
+      canvas.height / image.naturalHeight
+    );
+    const scale = baseScale * homeCropState.zoom;
+    const drawW = image.naturalWidth * scale;
+    const drawH = image.naturalHeight * scale;
+
+    const centerX = (canvas.width - drawW) / 2;
+    const centerY = (canvas.height - drawH) / 2;
+
+    let x = centerX + homeCropState.panX;
+    let y = centerY + homeCropState.panY;
+
+    x = Math.min(0,Math.max(canvas.width - drawW,x));
+    y = Math.min(0,Math.max(canvas.height - drawH,y));
+
+    homeCropState.panX = x - centerX;
+    homeCropState.panY = y - centerY;
+  }
+
+  function drawHomeCrop() {
+    const canvas = homeCropCanvas();
+    const image = homeCropState.image;
+    if (!canvas || !image) return;
+
+    clampHomeCropPan();
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    const baseScale = Math.max(
+      canvas.width / image.naturalWidth,
+      canvas.height / image.naturalHeight
+    );
+    const scale = baseScale * homeCropState.zoom;
+    const drawW = image.naturalWidth * scale;
+    const drawH = image.naturalHeight * scale;
+    const x = (canvas.width - drawW) / 2 + homeCropState.panX;
+    const y = (canvas.height - drawH) / 2 + homeCropState.panY;
+
+    ctx.drawImage(image,x,y,drawW,drawH);
+  }
+
+  function setHomeCropRatio(key) {
+    homeCropState.ratio = homeCropRatioValue(key);
+    homeCropState.zoom = 1;
+    homeCropState.panX = 0;
+    homeCropState.panY = 0;
+
+    sizeHomeCropCanvas(homeCropState.ratio);
+
+    const zoom = $('#homeCropZoom');
+    if (zoom) zoom.value = '1';
+    $('#homeCropZoomValue').textContent = '100%';
+
+    $('.home-crop-ratios [data-crop-ratio]').forEach(button => {
+      button.classList.toggle('active',button.dataset.cropRatio === String(key));
+    });
+
+    drawHomeCrop();
+  }
+
+  async function openHomeCropper(file,targetId) {
+    if (!file) return;
+    if (!targetId) throw new Error('No crop target selected.');
+
+    if (homeCropState.objectUrl) {
+      URL.revokeObjectURL(homeCropState.objectUrl);
+      homeCropState.objectUrl = '';
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    await new Promise((resolve,reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('Could not open the selected image.'));
+      image.src = objectUrl;
+    });
+
+    homeCropState = {
+      ...homeCropState,
+      file,
+      targetId,
+      image,
+      objectUrl,
+      ratio:0.8,
+      zoom:1,
+      panX:0,
+      panY:0,
+      dragging:false,
+      pointerId:null,
+      lastX:0,
+      lastY:0
+    };
+
+    const preferred = targetId === 'homeContactMarkImage' ? '1' : '0.8';
+    setHomeCropRatio(preferred);
+
+    const title = document.querySelector('#homeCropDialog .workspace-modal-head h3');
+    if (title) title.textContent = 'Crop ' + cropTargetLabel(targetId);
+
+    $('#homeCropDialog').showModal();
+  }
+
+  async function homeCropToFile() {
+    const canvas = homeCropCanvas();
+    const original = homeCropState.file;
+    if (!canvas || !original) throw new Error('There is no crop to export.');
+
+    const blob = await new Promise((resolve,reject) => {
+      canvas.toBlob(result => {
+        if (result) resolve(result);
+        else reject(new Error('Could not create the cropped image.'));
+      },'image/png');
+    });
+
+    const baseName = original.name.replace(/\.[^.]+$/,'') || 'image';
+    return new File([blob],baseName + '-cropped.png',{
+      type:'image/png',
+      lastModified:Date.now()
+    });
+  }
+
+  function closeHomeCropper() {
+    const dialog = $('#homeCropDialog');
+    if (dialog?.open) dialog.close();
+
+    if (homeCropState.objectUrl) {
+      URL.revokeObjectURL(homeCropState.objectUrl);
+    }
+
+    homeCropState = {
+      file:null,
+      targetId:null,
+      image:null,
+      objectUrl:'',
+      ratio:0.8,
+      zoom:1,
+      panX:0,
+      panY:0,
+      dragging:false,
+      pointerId:null,
+      lastX:0,
+      lastY:0
+    };
+  }
 
   function showWorkspaceToast(message,type='busy',duration=2600) {
     const toast = $('#workspaceToast');
@@ -1185,6 +1393,10 @@
   $$('[data-close-dialog]').forEach(button => {
     button.addEventListener('click', () => {
       const dialog = document.getElementById(button.dataset.closeDialog);
+      if (dialog?.id === 'homeCropDialog') {
+        closeHomeCropper();
+        return;
+      }
       if (dialog?.open) dialog.close();
     });
   });
@@ -1288,19 +1500,113 @@
 
   Object.entries(directHomeUploads).forEach(([fileId,targetId]) => {
     document.getElementById(fileId)?.addEventListener('change', async event => {
-      const file = event.currentTarget.files?.[0];
+      const input = event.currentTarget;
+      const file = input.files?.[0];
+      input.value = '';
       if (!file) return;
 
       try {
-        await uploadHomeContentImage(file,targetId);
+        await openHomeCropper(file,targetId);
       } catch (error) {
-        const message = 'Upload failed: ' + (error?.message || 'Unknown error');
+        const message = 'Image editor failed: ' + (error?.message || 'Unknown error');
         $('#homeContentActionStatus').textContent = message;
         showWorkspaceToast(message,'error',5000);
-      } finally {
-        event.currentTarget.value = '';
       }
     });
+  });
+
+  $('#homeCropZoom')?.addEventListener('input', event => {
+    homeCropState.zoom = Number(event.currentTarget.value || 1);
+    $('#homeCropZoomValue').textContent = Math.round(homeCropState.zoom * 100) + '%';
+    drawHomeCrop();
+  });
+
+  $('.home-crop-ratios [data-crop-ratio]').forEach(button => {
+    button.addEventListener('click', () => setHomeCropRatio(button.dataset.cropRatio));
+  });
+
+  const cropCanvas = homeCropCanvas();
+
+  cropCanvas?.addEventListener('pointerdown', event => {
+    if (!homeCropState.image) return;
+    homeCropState.dragging = true;
+    homeCropState.pointerId = event.pointerId;
+    homeCropState.lastX = event.clientX;
+    homeCropState.lastY = event.clientY;
+    cropCanvas.classList.add('is-dragging');
+    cropCanvas.setPointerCapture?.(event.pointerId);
+  });
+
+  cropCanvas?.addEventListener('pointermove', event => {
+    if (!homeCropState.dragging || homeCropState.pointerId !== event.pointerId) return;
+
+    const rect = cropCanvas.getBoundingClientRect();
+    const dx = (event.clientX - homeCropState.lastX) * (cropCanvas.width / rect.width);
+    const dy = (event.clientY - homeCropState.lastY) * (cropCanvas.height / rect.height);
+
+    homeCropState.lastX = event.clientX;
+    homeCropState.lastY = event.clientY;
+    homeCropState.panX += dx;
+    homeCropState.panY += dy;
+    drawHomeCrop();
+  });
+
+  const endCropDrag = event => {
+    if (homeCropState.pointerId !== null && event.pointerId !== homeCropState.pointerId) return;
+    homeCropState.dragging = false;
+    homeCropState.pointerId = null;
+    cropCanvas?.classList.remove('is-dragging');
+  };
+
+  cropCanvas?.addEventListener('pointerup',endCropDrag);
+  cropCanvas?.addEventListener('pointercancel',endCropDrag);
+
+  $('#homeCropUseOriginal')?.addEventListener('click', async () => {
+    const file = homeCropState.file;
+    const targetId = homeCropState.targetId;
+    if (!file || !targetId) return;
+
+    const button = $('#homeCropUseOriginal');
+    button.disabled = true;
+    $('#homeCropApply').disabled = true;
+
+    try {
+      await uploadHomeContentImage(file,targetId);
+      closeHomeCropper();
+    } catch (error) {
+      const message = 'Upload failed: ' + (error?.message || 'Unknown error');
+      showWorkspaceToast(message,'error',5000);
+    } finally {
+      button.disabled = false;
+      $('#homeCropApply').disabled = false;
+    }
+  });
+
+  $('#homeCropApply')?.addEventListener('click', async () => {
+    const targetId = homeCropState.targetId;
+    if (!targetId) return;
+
+    const button = $('#homeCropApply');
+    button.disabled = true;
+    $('#homeCropUseOriginal').disabled = true;
+    button.textContent = 'Cropping…';
+
+    try {
+      const croppedFile = await homeCropToFile();
+      await uploadHomeContentImage(croppedFile,targetId);
+      closeHomeCropper();
+    } catch (error) {
+      const message = 'Crop/upload failed: ' + (error?.message || 'Unknown error');
+      showWorkspaceToast(message,'error',5000);
+    } finally {
+      button.disabled = false;
+      $('#homeCropUseOriginal').disabled = false;
+      button.textContent = 'Use crop';
+    }
+  });
+
+  $('#homeCropDialog')?.addEventListener('close', () => {
+    if (homeCropState.file) closeHomeCropper();
   });
 
   Object.keys(homePreviewMap).forEach(inputId => {
