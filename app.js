@@ -315,6 +315,51 @@ window.addEventListener('scroll', () => {
   header.classList.toggle('scrolled', window.scrollY > 18);
 }, { passive: true });
 
+function cleanSectionUrl() {
+  if (!location.hash) return;
+  history.replaceState(null, '', location.pathname + location.search);
+}
+
+function scrollToSection(target, behavior = prefersReducedMotion ? 'auto' : 'smooth') {
+  if (!target) return;
+  target.scrollIntoView({ behavior, block: 'start' });
+  cleanSectionUrl();
+}
+
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', event => {
+    const href = link.getAttribute('href');
+    if (!href || href === '#') return;
+
+    const target = document.querySelector(href);
+    if (!target) return;
+
+    event.preventDefault();
+    scrollToSection(target);
+  });
+});
+
+// Preserve direct section links, but remove the fragment from the address bar
+// after the browser has navigated to the requested section.
+if (location.hash) {
+  const initialTarget = document.querySelector(location.hash);
+  if (initialTarget) {
+    requestAnimationFrame(() => {
+      initialTarget.scrollIntoView({ behavior: 'auto', block: 'start' });
+      cleanSectionUrl();
+    });
+  } else {
+    cleanSectionUrl();
+  }
+}
+
+window.addEventListener('hashchange', () => {
+  if (!location.hash) return;
+  const target = document.querySelector(location.hash);
+  if (target) scrollToSection(target, 'auto');
+  else cleanSectionUrl();
+});
+
 if (!prefersReducedMotion && window.matchMedia('(pointer:fine)').matches) {
   const hero = document.querySelector('.hero');
   const layers = [...hero.querySelectorAll('.scene-img[data-depth]')];
