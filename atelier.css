@@ -31,3 +31,7 @@
 .flip-actions button{padding:8px 7px!important;font-size:9px;color:#aeb9b0}
 .flip-actions button:hover{border-color:#3ed84a!important;color:#fff}
 .flip-actions button.active{background:#183d1d!important;border-color:#42e84f!important;color:#6dff77!important}
+
+.editor-brand-group{display:flex;align-items:center;gap:12px}
+.editor-dashboard-link{color:#7f8c82;text-decoration:none;font-size:10px;padding:7px 9px;border:1px solid #263029;border-radius:8px}
+.editor-dashboard-link:hover{color:#fff;border-color:#3dd849}
