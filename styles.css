@@ -756,9 +756,49 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   min-height:330px;
   padding:28px 34px 48px 0;
   border-right:1px solid var(--line);
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  transition:
+    background .42s var(--ease),
+    transform .42s var(--ease),
+    box-shadow .42s var(--ease);
+}
+.process-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  pointer-events:none;
+  opacity:0;
+  background:
+    radial-gradient(circle at 50% 45%,
+      color-mix(in srgb,var(--green-bright) 18%,transparent) 0,
+      color-mix(in srgb,var(--green) 8%,transparent) 36%,
+      transparent 70%);
+  transition:opacity .42s ease;
+}
+.process-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  opacity:0;
+  background:linear-gradient(
+    115deg,
+    transparent 18%,
+    color-mix(in srgb,var(--green-bright) 8%,transparent) 50%,
+    transparent 82%
+  );
+  transform:translateX(-32%);
+  transition:opacity .42s ease,transform .72s var(--ease);
 }
 .process-card+ .process-card{padding-left:34px}
 .process-card:last-child{border-right:0}
+.process-card>span,
+.process-card h3,
+.process-card p{position:relative;z-index:3}
 .process-card>span{font-size:10px;color:var(--green);font-weight:850}
 .process-card h3{
   margin:74px 0 18px;
@@ -767,8 +807,62 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   line-height:.86;
   letter-spacing:-.06em;
   font-style:italic;
+  transition:
+    color .34s ease,
+    text-shadow .34s ease,
+    transform .42s var(--ease);
 }
-.process-card p{max-width:310px;color:var(--muted);font-size:13px}
+.process-card p{
+  max-width:310px;
+  color:var(--muted);
+  font-size:13px;
+  transition:color .34s ease,transform .42s var(--ease);
+}
+.process-card:hover{
+  background:color-mix(in srgb,var(--green) 5%,var(--paper));
+  transform:translateY(-5px);
+  box-shadow:0 22px 60px color-mix(in srgb,var(--green) 8%,transparent);
+}
+.process-card:hover::before{opacity:1}
+.process-card:hover::after{opacity:1;transform:translateX(28%)}
+.process-card:hover h3{
+  color:var(--green);
+  text-shadow:0 12px 34px color-mix(in srgb,var(--green-bright) 18%,transparent);
+  transform:translateY(-3px);
+}
+.process-card:hover p{
+  color:color-mix(in srgb,var(--ink) 72%,var(--muted));
+  transform:translateY(-2px);
+}
+.process-figure{
+  position:absolute;
+  z-index:1;
+  right:-8%;
+  bottom:-36%;
+  width:min(78%,430px);
+  max-width:none;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(34px) scale(.94);
+  transform-origin:bottom center;
+  filter:saturate(.8) contrast(.96);
+  -webkit-mask-image:linear-gradient(to top,#000 54%,rgba(0,0,0,.95) 72%,transparent 100%);
+  mask-image:linear-gradient(to top,#000 54%,rgba(0,0,0,.95) 72%,transparent 100%);
+  transition:
+    opacity .58s ease,
+    transform .72s cubic-bezier(.16,.78,.22,1),
+    filter .58s ease;
+}
+.process-evolve:hover .process-figure{
+  opacity:.62;
+  transform:translateY(0) scale(1.01);
+  filter:saturate(.94) contrast(1);
+}
+.process-evolve:hover h3,
+.process-evolve:hover p,
+.process-evolve:hover>span{
+  text-shadow:0 2px 16px var(--paper);
+}
 
 .contact{
   min-height:700px;
@@ -914,6 +1008,7 @@ footer{
   .about-copy{max-width:720px}
   .process-grid{grid-template-columns:1fr}
   .process-card,.process-card+.process-card{padding:28px 0 42px;border-right:0;border-bottom:1px solid var(--line);min-height:240px}
+  .process-figure{right:-2%;bottom:-54%;width:min(48%,360px)}
   .process-card:last-child{border-bottom:0}
   .process-card h3{margin-top:34px}
   footer{padding-left:40px}
@@ -966,6 +1061,9 @@ footer{
   .about-circle{width:190px}
   .fall-leaf{opacity:.65}
   .process-grid{margin-top:45px}
+  .process-card{min-height:280px}
+  .process-figure{right:-20%;bottom:-18%;width:76%}
+  .process-evolve:hover .process-figure{opacity:.46}
   .contact{min-height:700px;display:block}
   .contact-mark{width:72vw;margin:60px 0 -170px 28vw}
   footer{padding:28px 20px;flex-direction:column;align-items:flex-start}
