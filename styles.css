@@ -868,15 +868,16 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   z-index:1;
   left:50%;
   right:auto;
-  bottom:-8%;
-  width:92%;
-  height:112%;
+  top:50%;
+  bottom:auto;
+  width:100%;
+  height:100%;
   max-width:none;
   object-fit:contain;
-  object-position:center bottom;
+  object-position:center center;
   pointer-events:none;
   opacity:0;
-  transform:translate(-50%,30px) scale(.96);
+  transform:translate(-50%,-44%) scale(.96);
   transform-origin:center bottom;
   filter:saturate(.94) contrast(1);
   -webkit-mask-image:linear-gradient(to top,#000 68%,rgba(0,0,0,.96) 86%,transparent 100%);
@@ -891,16 +892,17 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
 .process-figure-evolve{
   left:50%;
   right:auto;
-  bottom:-8%;
-  width:92%;
-  height:112%;
+  top:50%;
+  bottom:auto;
+  width:100%;
+  height:100%;
   max-width:none;
-  object-position:center bottom;
+  object-position:center center;
 }
 
 .process-card:hover .process-figure{
   opacity:.62;
-  transform:translate(-50%,-4px) scale(1);
+  transform:translate(-50%,-50%) scale(1);
   filter:saturate(.94) contrast(1);
 }
 .process-card:hover h3,
@@ -1155,11 +1157,12 @@ footer p{
   .process-figure-evolve{
     left:50%;
     right:auto;
-    bottom:-8%;
-    width:88%;
-    height:110%;
+    top:50%;
+    bottom:auto;
+    width:100%;
+    height:100%;
     max-width:none;
-    object-position:center bottom;
+    object-position:center center;
   }
   .process-card:last-child{border-bottom:0}
   .process-card h3{margin-top:34px}
@@ -1230,15 +1233,16 @@ footer p{
   .process-figure-evolve{
     left:50%;
     right:auto;
-    bottom:-6%;
-    width:94%;
-    height:106%;
+    top:50%;
+    bottom:auto;
+    width:100%;
+    height:100%;
     max-width:none;
-    object-position:center bottom;
+    object-position:center center;
   }
   .process-card:hover .process-figure{
     opacity:.46;
-    transform:translate(-50%,-2px) scale(1);
+    transform:translate(-50%,-50%) scale(1);
   }
   .contact{min-height:700px;display:block}
   .contact-mark{width:calc(var(--layout-vw, 1vw) * 72);margin:60px 0 -170px calc(var(--layout-vw, 1vw) * 28)}
