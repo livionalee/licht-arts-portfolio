@@ -947,6 +947,14 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   color:white;
   transform:translateX(-5%);
 }
+.contact-mark img{display:none;width:100%;height:100%;object-fit:contain}
+.contact-mark.has-custom-image{
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.contact-mark.has-custom-image span{display:none}
+.contact-mark.has-custom-image img{display:block}
 
 footer{
   min-height:84px;
