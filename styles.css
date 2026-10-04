@@ -1270,3 +1270,5 @@ html[data-proportion-lock="desktop"] body{
 html[data-proportion-lock="desktop"]{
   min-height:100%;
 }
+
+.dialog-art[hidden]{display:none!important}
