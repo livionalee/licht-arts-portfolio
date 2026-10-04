@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>LichtArts Workspace</title>
-  <link rel="stylesheet" href="workspace.css?v=20261004i" />
+  <link rel="stylesheet" href="workspace.css?v=20261004k" />
 </head>
 <body>
   <section class="dash-login" id="dashLogin">
@@ -272,6 +272,92 @@
           <article class="setting-card"><span>CMS backend</span><strong>Supabase</strong><small>Auth · Drafts · Revisions · Storage</small></article>
           <article class="setting-card"><span>Theme</span><strong>Light / Dark</strong><small>Visitor preference stored locally</small></article>
         </div>
+        <section class="panel-card homepage-content-editor">
+          <div class="panel-title">
+            <div><span>Homepage</span><h3>Process & Contact content</h3></div>
+            <span class="content-save-state" id="homeContentStatus">Draft loaded</span>
+          </div>
+
+          <div class="homepage-editor-grid">
+            <div class="homepage-editor-section">
+              <div class="homepage-editor-heading">
+                <span>03 / PROCESS</span>
+                <h4>Process section</h4>
+                <p>Edit the heading plus all three hover cards and their character images.</p>
+              </div>
+
+              <div class="homepage-fields two-col">
+                <label>Intro line 1<input id="homeProcessIntroLine1" /></label>
+                <label>Intro line 2<input id="homeProcessIntroLine2" /></label>
+                <label class="span-2">Intro description<textarea id="homeProcessIntroText" rows="2"></textarea></label>
+              </div>
+
+              <div class="homepage-card-editor">
+                <div class="homepage-card-title"><strong>Envision</strong><span>01</span></div>
+                <div class="homepage-fields two-col">
+                  <label>Title<input id="homeEnvisionTitle" /></label>
+                  <label class="span-2">Description<textarea id="homeEnvisionText" rows="2"></textarea></label>
+                  <label class="span-2">Character image URL
+                    <div class="asset-input-row"><input id="homeEnvisionImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeEnvisionImage">Upload</button></div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="homepage-card-editor">
+                <div class="homepage-card-title"><strong>Explain</strong><span>02</span></div>
+                <div class="homepage-fields two-col">
+                  <label>Title<input id="homeExplainTitle" /></label>
+                  <label class="span-2">Description<textarea id="homeExplainText" rows="2"></textarea></label>
+                  <label class="span-2">Character image URL
+                    <div class="asset-input-row"><input id="homeExplainImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeExplainImage">Upload</button></div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="homepage-card-editor">
+                <div class="homepage-card-title"><strong>Evolve</strong><span>03</span></div>
+                <div class="homepage-fields two-col">
+                  <label>Title<input id="homeEvolveTitle" /></label>
+                  <label class="span-2">Description<textarea id="homeEvolveText" rows="2"></textarea></label>
+                  <label class="span-2">Character image URL
+                    <div class="asset-input-row"><input id="homeEvolveImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeEvolveImage">Upload</button></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="homepage-editor-section">
+              <div class="homepage-editor-heading">
+                <span>04 / CONTACT</span>
+                <h4>Contact section</h4>
+                <p>Edit the call-to-action text, destination, and the large right-side mark/image.</p>
+              </div>
+
+              <div class="homepage-fields two-col">
+                <label>Eyebrow<input id="homeContactEyebrow" /></label>
+                <label>Heading line 1<input id="homeContactLine1" /></label>
+                <label>Heading line 2<input id="homeContactLine2" /></label>
+                <label class="span-2">Description<textarea id="homeContactText" rows="3"></textarea></label>
+                <label>Button label<input id="homeContactButtonLabel" /></label>
+                <label>Button link<input id="homeContactButtonHref" type="url" /></label>
+                <label>Fallback mark letter<input id="homeContactMarkLetter" maxlength="3" /></label>
+                <label class="span-2">Right-side image URL
+                  <div class="asset-input-row"><input id="homeContactMarkImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeContactMarkImage">Upload</button></div>
+                  <small>Leave empty to show the circular “L” mark instead.</small>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <input id="homeContentUploadInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+          <div class="homepage-editor-actions">
+            <a class="secondary-btn" href="index.html" target="_blank">Preview live site ↗</a>
+            <span id="homeContentActionStatus"></span>
+            <button type="button" class="secondary-btn button-reset" id="saveHomeContentDraft">Save draft</button>
+            <button type="button" class="primary-btn button-reset" id="publishHomeContent">Publish changes</button>
+          </div>
+        </section>
+
         <div class="notice-card">
           <strong>Next settings that fit here</strong>
           <p>Logo, navigation labels, social links, Behance URL, SEO metadata, default theme and contact information can all live in this Workspace instead of Studio.</p>
@@ -394,6 +480,6 @@
   </dialog>
 
   <script src="cms-api.js?v=20261004g"></script>
-  <script src="workspace.js?v=20261004j"></script>
+  <script src="workspace.js?v=20261004k"></script>
 </body>
 </html>
