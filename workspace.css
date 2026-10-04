@@ -553,3 +553,16 @@
   .home-crop-grid{inset:10px}
   #homeCropCanvas{max-height:48vh}
 }
+
+/* Unified LichtArts symbol */
+.dash-logo,.workspace-brand span{
+  position:relative;
+  font-size:0!important;
+  overflow:hidden;
+}
+.dash-logo::before,.workspace-brand span::before{
+  content:"";
+  width:54%;
+  height:72%;
+  background:url("assets/brand/lichtarts-symbol.svg") center/contain no-repeat;
+}
