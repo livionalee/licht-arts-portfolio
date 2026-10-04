@@ -829,6 +829,32 @@ footer{
   font-style:italic;
 }
 .dialog-copy p{color:var(--muted)}
+.dialog-description{color:var(--muted);line-height:1.7}
+.dialog-description p{margin:0 0 1em}
+.dialog-description h2,.dialog-description h3{
+  margin:1.15em 0 .45em;
+  font-family:inherit;
+  font-style:normal;
+  letter-spacing:-.02em;
+  line-height:1.15;
+  color:var(--ink);
+}
+.dialog-description h2{font-size:1.75rem}
+.dialog-description h3{font-size:1.35rem}
+.dialog-description ul,.dialog-description ol{padding-left:1.4em}
+.dialog-description blockquote{
+  margin:1.1em 0;
+  padding:10px 14px;
+  border-left:3px solid var(--green);
+  background:color-mix(in srgb,var(--green) 6%,transparent);
+}
+.dialog-description a{color:var(--green);text-decoration:underline;text-underline-offset:3px}
+.dialog-description img{
+  display:block;
+  width:100%;
+  height:auto;
+  margin:18px 0;
+}
 .dialog-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
 .dialog-tags span{font-size:9px;padding:7px 10px;border:1px solid var(--line);border-radius:999px}
 
