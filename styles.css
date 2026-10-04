@@ -624,7 +624,10 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   z-index:6;
   color:color-mix(in srgb,var(--green) 24%,transparent);
   text-shadow:0 12px 35px color-mix(in srgb,var(--green) 9%,transparent);
-  transition:color .28s ease,transform .55s cubic-bezier(.2,.72,.2,1);
+  transition:
+    color .28s ease,
+    transform .55s cubic-bezier(.2,.72,.2,1),
+    letter-spacing .55s cubic-bezier(.2,.72,.2,1);
 }
 .licht-copy:not(.licht-main){
   z-index:4;
@@ -635,14 +638,30 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
     transform .72s cubic-bezier(.2,.72,.2,1),
     opacity .48s ease;
 }
-.licht-word:hover .licht-copy-1{transform:translateY(-132px) scaleX(1.035);opacity:.55}
-.licht-word:hover .licht-copy-2{transform:translateY(-82px) scaleX(1.02);opacity:.72}
-.licht-word:hover .licht-copy-3{transform:translateY(-34px) scaleX(1.01);opacity:.88}
-.licht-word:hover .licht-copy-4{transform:translateY(58px) scaleX(1.015);opacity:.7}
-.licht-word:hover .licht-copy-5{transform:translateY(108px) scaleX(1.03);opacity:.48}
+.licht-word:hover .licht-copy-1{
+  transform:translate(-120px,-128px) scaleX(1.055);
+  opacity:.5;
+}
+.licht-word:hover .licht-copy-2{
+  transform:translate(92px,-80px) scaleX(1.04);
+  opacity:.68;
+}
+.licht-word:hover .licht-copy-3{
+  transform:translate(-48px,-28px) scaleX(1.025);
+  opacity:.86;
+}
+.licht-word:hover .licht-copy-4{
+  transform:translate(70px,58px) scaleX(1.035);
+  opacity:.66;
+}
+.licht-word:hover .licht-copy-5{
+  transform:translate(-105px,108px) scaleX(1.05);
+  opacity:.46;
+}
 .licht-word:hover .licht-main{
   color:color-mix(in srgb,var(--green-bright) 86%,var(--green));
-  transform:scale(1.018);
+  transform:scaleX(1.04) scaleY(1.018);
+  letter-spacing:-.045em;
 }
 
 .falling-leaves{
@@ -933,11 +952,11 @@ footer{
   .licht-word:hover .licht-copy-3{transform:translateY(-14px);opacity:.28}
   .licht-word:hover .licht-copy-4{transform:translateY(28px);opacity:.22}
   .licht-word:hover .licht-copy-5{transform:translateY(52px);opacity:.12}
-  .licht-word:hover .licht-copy-1{transform:translateY(-82px);opacity:.5}
-  .licht-word:hover .licht-copy-2{transform:translateY(-52px);opacity:.66}
-  .licht-word:hover .licht-copy-3{transform:translateY(-20px);opacity:.82}
-  .licht-word:hover .licht-copy-4{transform:translateY(38px);opacity:.64}
-  .licht-word:hover .licht-copy-5{transform:translateY(70px);opacity:.44}
+  .licht-word:hover .licht-copy-1{transform:translate(-54px,-78px);opacity:.5}
+  .licht-word:hover .licht-copy-2{transform:translate(42px,-48px);opacity:.66}
+  .licht-word:hover .licht-copy-3{transform:translate(-22px,-18px);opacity:.82}
+  .licht-word:hover .licht-copy-4{transform:translate(32px,36px);opacity:.64}
+  .licht-word:hover .licht-copy-5{transform:translate(-46px,66px);opacity:.44}
   .about-circle{width:190px}
   .fall-leaf{opacity:.65}
   .process-grid{margin-top:45px}
