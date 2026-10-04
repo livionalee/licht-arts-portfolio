@@ -17,13 +17,7 @@ function lockDesktopProportions() {
     root.style.setProperty('--layout-svh', (logicalHeight / 100) + 'px');
     root.style.setProperty('--layout-scale', String(scale));
 
-    requestAnimationFrame(() => {
-      const pageHeight = Math.max(
-        document.body.scrollHeight,
-        document.documentElement.scrollHeight
-      );
-      root.style.setProperty('--layout-page-height', pageHeight + 'px');
-    });
+    root.style.removeProperty('--layout-page-height');
   };
 
   applyScale();
