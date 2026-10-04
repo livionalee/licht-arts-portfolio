@@ -85,14 +85,28 @@ const filters = [...document.querySelectorAll('.filter')];
 const themeToggle = document.querySelector('.theme-toggle');
 const header = document.querySelector('.site-header');
 const dialog = document.querySelector('#projectDialog');
-const dialogArt = document.querySelector('#dialogArt');
 const dialogMeta = document.querySelector('#dialogMeta');
 const dialogTitle = document.querySelector('#dialogTitle');
+const dialogTopTitle = document.querySelector('#dialogTopTitle');
 const dialogDescription = document.querySelector('#dialogDescription');
 const dialogTags = document.querySelector('#dialogTags');
+const dialogPublishedDate = document.querySelector('#dialogPublishedDate');
+const dialogRelatedProjects = document.querySelector('#dialogRelatedProjects');
+const dialogAppreciationCount = document.querySelector('#dialogAppreciationCount');
+const dialogLikeCount = document.querySelector('#dialogLikeCount');
+const dialogViewCount = document.querySelector('#dialogViewCount');
+const dialogOwnerProjectTitle = document.querySelector('#dialogOwnerProjectTitle');
+const dialogOwnerProjectMeta = document.querySelector('#dialogOwnerProjectMeta');
+const projectSaveAction = document.querySelector('#projectSaveAction');
+const projectShareAction = document.querySelector('#projectShareAction');
+const projectAppreciateAction = document.querySelector('#projectAppreciateAction');
+const projectToolsAction = document.querySelector('#projectToolsAction');
+const projectCommentInput = document.querySelector('#projectCommentInput');
+const projectCommentButton = document.querySelector('#projectCommentButton');
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let activeFilter = 'all';
+let activeProjectIndex = -1;
 
 function escapeProjectText(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -209,19 +223,80 @@ function renderProjects() {
   });
 }
 
+function projectStorageKey(prefix, project) {
+  return 'licht-' + prefix + '-' + String(project?.id || project?.title || 'project');
+}
+
+function projectPublishedLabel(project) {
+  const raw = project?.updatedAt || project?.createdAt || '';
+  if (!raw) return '';
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return '';
+  return 'Published: ' + date.toLocaleDateString(undefined, {
+    year:'numeric', month:'long', day:'numeric'
+  });
+}
+
+function projectRelatedHtml(currentIndex) {
+  return projects
+    .map((project,index)=>({project,index}))
+    .filter(item=>item.index!==currentIndex)
+    .slice(0,4)
+    .map(({project,index})=>{
+      const style=project.cover
+        ? ` style="background-image:url('${String(project.cover).replace(/'/g,'%27')}')"`
+        : '';
+      const cls=project.cover?'':(project.art||'');
+      return `
+        <button type="button" class="project-related-card" data-related-project="${index}">
+          <span class="project-related-art ${cls}"${style}></span>
+          <strong>${escapeProjectText(project.title)}</strong>
+          <small>${escapeProjectText(project.categoryLabel)}</small>
+        </button>
+      `;
+    }).join('');
+}
+
+function syncProjectActionState(project) {
+  const saved = localStorage.getItem(projectStorageKey('saved',project)) === '1';
+  const appreciated = localStorage.getItem(projectStorageKey('appreciated',project)) === '1';
+  const likes = appreciated ? 1 : 0;
+
+  projectSaveAction?.classList.toggle('active',saved);
+  projectAppreciateAction?.classList.toggle('active',appreciated);
+
+  const saveLabel=projectSaveAction?.querySelector('span');
+  const appreciateLabel=projectAppreciateAction?.querySelector('span');
+  if (saveLabel) saveLabel.textContent=saved?'Saved':'Save';
+  if (appreciateLabel) appreciateLabel.textContent=appreciated?'Appreciated':'Appreciate';
+
+  if (dialogAppreciationCount) dialogAppreciationCount.textContent=String(likes);
+  if (dialogLikeCount) dialogLikeCount.textContent=String(likes);
+}
+
 function openProject(index) {
   const project = projects[index];
   if (!project) return;
 
-  // The project cover is only a gallery thumbnail.
-  // Rich-content images belong inside the case-study body.
-  dialogArt.hidden = true;
-  dialogArt.className = 'dialog-art';
-  dialogArt.style.backgroundImage = '';
+  activeProjectIndex = index;
   dialogMeta.textContent = project.categoryLabel;
   dialogTitle.textContent = project.title;
+  if (dialogTopTitle) dialogTopTitle.textContent = project.title;
+  if (dialogOwnerProjectTitle) dialogOwnerProjectTitle.textContent = project.title;
+  if (dialogOwnerProjectMeta) dialogOwnerProjectMeta.textContent = project.categoryLabel || 'Licht Arts';
+  if (dialogPublishedDate) dialogPublishedDate.textContent = projectPublishedLabel(project);
   dialogDescription.innerHTML = projectContentHtml(project);
   dialogTags.innerHTML = (project.tags || []).map(tag => `<span>${escapeProjectText(tag)}</span>`).join('');
+  if (dialogRelatedProjects) dialogRelatedProjects.innerHTML = projectRelatedHtml(index);
+
+  const viewKey = projectStorageKey('views',project);
+  const views = Math.max(1,Number(localStorage.getItem(viewKey)||0)+1);
+  localStorage.setItem(viewKey,String(views));
+  if (dialogViewCount) dialogViewCount.textContent=String(views);
+  syncProjectActionState(project);
+
+  if (projectCommentInput) projectCommentInput.value='';
+  if (projectCommentButton) projectCommentButton.disabled=true;
 
   const settings = project.settings && typeof project.settings === 'object' ? project.settings : {};
   const style = settings.style && typeof settings.style === 'object' ? settings.style : {};
@@ -267,6 +342,10 @@ function openProject(index) {
   });
 
   if (!dialog.open) dialog.showModal();
+
+  dialogRelatedProjects?.querySelectorAll('[data-related-project]').forEach(card => {
+    card.addEventListener('click', () => openProject(Number(card.dataset.relatedProject)));
+  });
 }
 
 function setTheme(theme) {
@@ -307,7 +386,9 @@ async function loadCmsProjects() {
       art: project.cover ? '' : fallbackProjects[index % fallbackProjects.length]?.art,
       tags: Array.isArray(project.tags) ? project.tags : [],
       behanceUrl: project.behance_url || '',
-      settings: project.settings || {}
+      settings: project.settings || {},
+      createdAt: project.created_at || '',
+      updatedAt: project.updated_at || ''
     }));
 
     renderProjects();
@@ -347,6 +428,54 @@ dialog.addEventListener('click', event => {
     event.clientY >= rect.top &&
     event.clientY <= rect.bottom;
   if (!inside) dialog.close();
+});
+
+projectSaveAction?.addEventListener('click', () => {
+  const project=projects[activeProjectIndex];
+  if(!project) return;
+  const key=projectStorageKey('saved',project);
+  const next=localStorage.getItem(key)!=='1';
+  localStorage.setItem(key,next?'1':'0');
+  syncProjectActionState(project);
+});
+
+projectAppreciateAction?.addEventListener('click', () => {
+  const project=projects[activeProjectIndex];
+  if(!project) return;
+  const key=projectStorageKey('appreciated',project);
+  const next=localStorage.getItem(key)!=='1';
+  localStorage.setItem(key,next?'1':'0');
+  syncProjectActionState(project);
+});
+
+projectShareAction?.addEventListener('click', async () => {
+  const project=projects[activeProjectIndex];
+  if(!project) return;
+  const shareData={title:project.title,text:project.excerpt||project.description||project.title,url:location.href};
+  try{
+    if(navigator.share) await navigator.share(shareData);
+    else{
+      await navigator.clipboard.writeText(location.href);
+      const label=projectShareAction.querySelector('span');
+      if(label){ const old=label.textContent; label.textContent='Copied'; setTimeout(()=>label.textContent=old,1400); }
+    }
+  }catch{}
+});
+
+projectToolsAction?.addEventListener('click', () => {
+  dialogTags?.scrollIntoView({behavior:prefersReducedMotion?'auto':'smooth',block:'center'});
+});
+
+projectCommentInput?.addEventListener('input', () => {
+  if(projectCommentButton) projectCommentButton.disabled=!projectCommentInput.value.trim();
+});
+
+projectCommentButton?.addEventListener('click', () => {
+  if(!projectCommentInput?.value.trim()) return;
+  projectCommentButton.textContent='Thanks for the feedback ✓';
+  projectCommentButton.disabled=true;
+  projectCommentInput.value='';
+  setTimeout(()=>projectCommentButton.textContent='Post a Comment',1800);
 });
 
 let revealObserver;
