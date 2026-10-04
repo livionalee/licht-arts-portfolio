@@ -170,7 +170,6 @@ async function loadCmsProjects() {
     }));
 
     renderProjects();
-loadCmsProjects();
   } catch {
     // Keep local fallback projects when the CMS is unavailable.
   }
@@ -286,4 +285,5 @@ if (!prefersReducedMotion && window.matchMedia('(pointer:fine)').matches) {
 }
 
 renderProjects();
+loadCmsProjects();
 observeReveals();
