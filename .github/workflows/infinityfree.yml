@@ -1,3 +1,4 @@
+# InfinityFree deployment trigger
 name: Deploy to InfinityFree
 
 on:
