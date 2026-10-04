@@ -211,8 +211,11 @@ function openProject(index) {
   const project = projects[index];
   if (!project) return;
 
-  dialogArt.className = `dialog-art project-art ${project.art || ''}`;
-  dialogArt.style.backgroundImage = project.cover ? `url('${String(project.cover).replace(/'/g, '%27')}')` : '';
+  // The project cover is only a gallery thumbnail.
+  // Rich-content images belong inside the case-study body.
+  dialogArt.hidden = true;
+  dialogArt.className = 'dialog-art';
+  dialogArt.style.backgroundImage = '';
   dialogMeta.textContent = project.categoryLabel;
   dialogTitle.textContent = project.title;
   dialogDescription.innerHTML = projectContentHtml(project);
