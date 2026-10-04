@@ -25,7 +25,6 @@
   };
 
   let siteDraftConfig = { version:1, managed:{}, customElements:[], content:{} };
-  let pendingHomeUploadTarget = null;
 
   const homeDefaults = {
     processIntroLine1:'From an idea',
@@ -775,6 +774,21 @@
     $('#projectSaveStatus').textContent = 'Cover uploaded · unsaved changes';
   }
 
+  let workspaceToastTimer = 0;
+
+  function showWorkspaceToast(message,type='busy',duration=2600) {
+    const toast = $('#workspaceToast');
+    if (!toast) return;
+    window.clearTimeout(workspaceToastTimer);
+    toast.textContent = message;
+    toast.className = 'workspace-toast show ' + type;
+    if (duration > 0) {
+      workspaceToastTimer = window.setTimeout(() => {
+        toast.className = 'workspace-toast';
+      },duration);
+    }
+  }
+
   const homeFieldMap = {
     homeProcessIntroLine1:'processIntroLine1',
     homeProcessIntroLine2:'processIntroLine2',
@@ -855,44 +869,78 @@
   }
 
   async function uploadHomeContentImage(file,targetId) {
-    if (!file || !targetId) return;
+    if (!file) throw new Error('No image selected.');
+    if (!targetId) throw new Error('No image target selected.');
+
     const target = document.getElementById(targetId);
-    if (!target) return;
+    if (!target) throw new Error('Image target was not found.');
 
     $('#homeContentActionStatus').textContent = 'Uploading image…';
+    showWorkspaceToast('Uploading image…','busy',0);
+
     const base64 = await new Promise((resolve,reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-      reader.onerror = reject;
+      reader.onerror = () => reject(new Error('Could not read the selected image.'));
       reader.readAsDataURL(file);
     });
 
     const result = await apiCall({
       action:'upload',
       name:file.name,
-      contentType:file.type,
+      contentType:file.type || 'image/png',
       base64
     });
 
+    if (!result?.url) throw new Error('Upload completed without an image URL.');
+
     target.value = result.url;
+    target.dispatchEvent(new Event('input',{bubbles:true}));
     updateHomeImagePreview(targetId);
     markHomeContentDirty();
+
     $('#homeContentActionStatus').textContent = 'Image uploaded · unsaved changes';
+    showWorkspaceToast('Image uploaded ✓ — save or publish to keep it','success',3200);
+    return result.url;
   }
 
   async function saveHomeContent(publishNow=false) {
-    siteDraftConfig.content = readHomeContentEditor();
-    $('#homeContentActionStatus').textContent = publishNow ? 'Publishing homepage…' : 'Saving homepage draft…';
+    const draftButton = $('#saveHomeContentDraft');
+    const publishButton = $('#publishHomeContent');
 
-    if (publishNow) {
-      await apiCall({ action:'publish', config:siteDraftConfig });
-      $('#homeContentStatus').textContent = 'Published';
-      $('#homeContentActionStatus').textContent = 'Homepage published ✓';
-      await hydrateWorkspace();
-    } else {
-      await apiCall({ action:'draft-save', config:siteDraftConfig });
-      $('#homeContentStatus').textContent = 'Draft saved';
-      $('#homeContentActionStatus').textContent = 'Homepage draft saved ✓';
+    siteDraftConfig.content = readHomeContentEditor();
+    draftButton.disabled = true;
+    publishButton.disabled = true;
+
+    const workingText = publishNow ? 'Publishing changes…' : 'Saving draft…';
+    $('#homeContentActionStatus').textContent = workingText;
+    $('#homeContentStatus').textContent = workingText;
+    showWorkspaceToast(workingText,'busy',0);
+
+    try {
+      if (publishNow) {
+        const result = await apiCall({ action:'publish', config:siteDraftConfig });
+        if (result?.ok !== true && !result?.published_at) {
+          // The CMS may return only a revision object; absence of an error is still success.
+        }
+        $('#homeContentStatus').textContent = 'Published ✓';
+        $('#homeContentActionStatus').textContent = 'Homepage changes published ✓';
+        showWorkspaceToast('Homepage published ✓','success',3600);
+      } else {
+        await apiCall({ action:'draft-save', config:siteDraftConfig });
+        $('#homeContentStatus').textContent = 'Draft saved ✓';
+        $('#homeContentActionStatus').textContent = 'Homepage draft saved ✓';
+        showWorkspaceToast('Draft saved ✓','success',3200);
+      }
+    } catch (error) {
+      const message = (publishNow ? 'Publish failed: ' : 'Save failed: ') + (error?.message || 'Unknown error');
+      $('#homeContentStatus').textContent = 'Save failed';
+      $('#homeContentActionStatus').textContent = message;
+      showWorkspaceToast(message,'error',5000);
+      throw error;
+    } finally {
+      draftButton.disabled = false;
+      publishButton.disabled = false;
     }
   }
 
@@ -1218,10 +1266,40 @@
     document.getElementById(id)?.addEventListener('input', markHomeContentDirty);
   });
 
-  $('[data-home-image-preview]').forEach(button => {
-    button.addEventListener('click', () => {
-      pendingHomeUploadTarget = button.dataset.homeImagePreview || null;
-      $('#homeContentUploadInput')?.click();
+  $$('[data-home-file-input]').forEach(trigger => {
+    trigger.addEventListener('click', () => {
+      const fileId = trigger.dataset.homeFileInput;
+      const input = document.getElementById(fileId);
+      if (!input) {
+        showWorkspaceToast('Image picker is unavailable.','error',4000);
+        return;
+      }
+      input.value = '';
+      input.click();
+    });
+  });
+
+  const directHomeUploads = {
+    homeEnvisionFile:'homeEnvisionImage',
+    homeExplainFile:'homeExplainImage',
+    homeEvolveFile:'homeEvolveImage',
+    homeContactMarkFile:'homeContactMarkImage'
+  };
+
+  Object.entries(directHomeUploads).forEach(([fileId,targetId]) => {
+    document.getElementById(fileId)?.addEventListener('change', async event => {
+      const file = event.currentTarget.files?.[0];
+      if (!file) return;
+
+      try {
+        await uploadHomeContentImage(file,targetId);
+      } catch (error) {
+        const message = 'Upload failed: ' + (error?.message || 'Unknown error');
+        $('#homeContentActionStatus').textContent = message;
+        showWorkspaceToast(message,'error',5000);
+      } finally {
+        event.currentTarget.value = '';
+      }
     });
   });
 
@@ -1229,27 +1307,12 @@
     document.getElementById(inputId)?.addEventListener('input', () => updateHomeImagePreview(inputId));
   });
 
-  $('.home-upload-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      pendingHomeUploadTarget = button.dataset.homeUpload || null;
-      $('#homeContentUploadInput')?.click();
-    });
-  });
-
-  $('#homeContentUploadInput')?.addEventListener('change', () => {
-    const file = $('#homeContentUploadInput').files?.[0];
-    uploadHomeContentImage(file,pendingHomeUploadTarget)
-      .catch(error => $('#homeContentActionStatus').textContent = 'Upload failed: ' + error.message);
-    $('#homeContentUploadInput').value = '';
-    pendingHomeUploadTarget = null;
-  });
-
   $('#saveHomeContentDraft')?.addEventListener('click', () => {
-    saveHomeContent(false).catch(error => $('#homeContentActionStatus').textContent = 'Save failed: ' + error.message);
+    saveHomeContent(false).catch(() => {});
   });
 
   $('#publishHomeContent')?.addEventListener('click', () => {
-    saveHomeContent(true).catch(error => $('#homeContentActionStatus').textContent = 'Publish failed: ' + error.message);
+    saveHomeContent(true).catch(() => {});
   });
 
   async function boot() {
