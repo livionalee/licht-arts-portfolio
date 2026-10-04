@@ -939,6 +939,7 @@
     if (title) title.textContent = 'Crop ' + cropTargetLabel(targetId);
 
     $('#homeCropDialog').showModal();
+    showWorkspaceToast('Crop editor ready — drag, zoom, then choose Use crop','busy',2200);
   }
 
   async function homeCropToFile() {
