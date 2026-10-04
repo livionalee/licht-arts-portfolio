@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>LichtArts Workspace</title>
-  <link rel="stylesheet" href="workspace.css?v=20261004n" />
+  <link rel="stylesheet" href="workspace.css?v=20261004o" />
 </head>
 <body>
   <section class="dash-login" id="dashLogin">
@@ -506,9 +506,57 @@
     </article>
   </dialog>
 
+
+  <dialog class="workspace-modal home-crop-dialog" id="homeCropDialog">
+    <form method="dialog" class="workspace-modal-card home-crop-card" id="homeCropForm">
+      <div class="workspace-modal-head">
+        <div>
+          <span>IMAGE EDITOR</span>
+          <h3>Crop image</h3>
+          <p>Drag the artwork to reposition it, then adjust zoom or aspect ratio before uploading.</p>
+        </div>
+        <button type="button" data-close-dialog="homeCropDialog">×</button>
+      </div>
+
+      <div class="workspace-modal-body home-crop-body">
+        <div class="home-crop-stage" id="homeCropStage">
+          <canvas id="homeCropCanvas" width="800" height="1000"></canvas>
+          <div class="home-crop-grid" aria-hidden="true">
+            <i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+
+        <div class="home-crop-controls">
+          <div class="home-crop-control-group">
+            <span>Aspect ratio</span>
+            <div class="home-crop-ratios" role="group" aria-label="Crop aspect ratio">
+              <button type="button" data-crop-ratio="original">Original</button>
+              <button type="button" data-crop-ratio="0.8" class="active">4:5</button>
+              <button type="button" data-crop-ratio="1">1:1</button>
+              <button type="button" data-crop-ratio="1.7777778">16:9</button>
+            </div>
+          </div>
+
+          <label class="home-crop-zoom">
+            <span>Zoom <output id="homeCropZoomValue">100%</output></span>
+            <input id="homeCropZoom" type="range" min="1" max="3" step="0.01" value="1" />
+          </label>
+
+          <p class="home-crop-hint">Tip: drag directly on the image to reposition it inside the crop frame.</p>
+        </div>
+      </div>
+
+      <div class="workspace-modal-actions">
+        <button type="button" class="secondary-btn button-reset" data-close-dialog="homeCropDialog">Cancel</button>
+        <button type="button" class="secondary-btn button-reset" id="homeCropUseOriginal">Upload original</button>
+        <button type="button" class="primary-btn button-reset" id="homeCropApply">Use crop</button>
+      </div>
+    </form>
+  </dialog>
+
   <div class="workspace-toast" id="workspaceToast" role="status" aria-live="polite"></div>
 
   <script src="cms-api.js?v=20261004g"></script>
-  <script src="workspace.js?v=20261004n"></script>
+  <script src="workspace.js?v=20261004o"></script>
 </body>
 </html>
