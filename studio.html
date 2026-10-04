@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <title>LichtArts Studio</title>
+  <link rel="stylesheet" href="studio.css?v=20261004m" />
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <form class="login-card" id="loginForm">
+      <div class="atelier-mark">L</div>
+      <p class="eyebrow">LICHTARTS ATELIER</p>
+      <h1>Visual Editor</h1>
+      <p>Edit the live portfolio without touching the source code.</p>
+      <label>Email<input id="email" type="email" autocomplete="username" required /></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" required /></label>
+      <button type="submit">Sign in</button>
+      <p class="status" id="loginStatus"></p>
+    </form>
+  </section>
+
+  <div class="editor-shell" id="editorShell" hidden>
+    <header class="editor-topbar">
+      <div class="editor-brand-group">
+        <a class="editor-brand" href="workspace.html"><span>L</span>LichtArts Studio</a>
+        <a class="editor-dashboard-link" href="workspace.html">Workspace</a>
+      </div>
+      <div class="device-switcher">
+        <button class="device active" data-width="1920" data-height="1080">Desktop</button>
+        <button class="device" data-width="820" data-height="1180">Tablet</button>
+        <button class="device" data-width="390" data-height="844">Mobile</button>
+      </div>
+      <div class="editor-actions">
+        <span id="saveStatus">Draft loaded</span>
+        <button id="undoBtn" title="Undo">↶</button>
+        <button id="saveBtn">Save draft</button>
+        <button class="primary" id="publishBtn">Publish</button>
+        <button id="logoutBtn">Sign out</button>
+      </div>
+    </header>
+
+    <aside class="layers-panel panel">
+      <div class="panel-head"><strong>Layers</strong><button id="refreshLayers">↻</button></div>
+      <div class="add-row">
+        <button id="addText">+ Text</button>
+        <button id="addButton">+ Button</button>
+        <button id="addImage">+ Image</button>
+        <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" hidden />
+      </div>
+      <div class="layer-help">Front layers are at the top. Drag to reorder.</div>
+      <div class="layers-list" id="layersList"></div>
+      <details class="history">
+        <summary>Revision history</summary>
+        <div id="revisionList"></div>
+      </details>
+    </aside>
+
+    <main class="canvas-wrap">
+      <div class="canvas-toolbar">
+        <span>Homepage / Hero</span>
+        <span><kbd>Ctrl</kbd>+<kbd>Z</kbd> Undo · Drag green corner to resize proportionally</span><span id="zoomLabel">100%</span>
+      </div>
+      <div class="canvas-stage" id="canvasStage">
+        <div class="preview-viewport" id="previewViewport">
+          <iframe id="preview" title="LichtArts live preview" src="index.html?editorPreview=1"></iframe>
+        </div>
+      </div>
+    </main>
+
+    <aside class="inspector panel">
+      <div class="panel-head"><strong>Inspector</strong></div>
+      <div id="emptyInspector" class="empty-inspector">Select a layer to edit it.</div>
+      <form id="inspectorForm" hidden>
+        <label>Name<input id="fieldName" disabled /></label>
+        <div class="two"><label><span id="labelX">X offset px</span><input id="fieldX" type="number" step="1" /></label><label><span id="labelY">Y offset px</span><input id="fieldY" type="number" step="1" /></label></div>
+        <div class="two"><label><span id="labelWidth">Scale %</span><input id="fieldWidth" type="number" step="1" min="5" /></label><label>Z index<input id="fieldZ" type="number" step="1" /></label></div>
+        <div class="stack-actions" aria-label="Layer stacking controls">
+          <button type="button" id="toFrontBtn" title="Bring to front">⇈ Front</button>
+          <button type="button" id="forwardBtn" title="Bring forward one layer">↑ Forward</button>
+          <button type="button" id="backwardBtn" title="Send backward one layer">↓ Backward</button>
+          <button type="button" id="toBackBtn" title="Send to back">⇊ Back</button>
+        </div>
+        <div class="two"><label>Opacity<input id="fieldOpacity" type="number" min="0" max="1" step=".05" /></label><label>Rotate °<input id="fieldRotation" type="number" step="1" /></label></div>
+        <div class="flip-actions" aria-label="Flip element">
+          <button type="button" id="flipXBtn" title="Flip horizontally">↔ Flip Horizontal</button>
+          <button type="button" id="flipYBtn" title="Flip vertically">↕ Flip Vertical</button>
+        </div>
+        <label id="textWrap">Text<textarea id="fieldText" rows="4"></textarea></label>
+        <label id="hrefWrap">Link URL<input id="fieldHref" /></label>
+        <label class="toggle"><input id="fieldVisible" type="checkbox" /> Visible</label>
+        <div class="inspector-actions">
+          <button type="button" id="duplicateBtn">Duplicate</button>
+          <button type="button" class="danger" id="deleteBtn">Delete / Hide</button>
+        </div>
+      </form>
+    </aside>
+  </div>
+
+  <script src="cms-api.js?v=20261004g"></script>
+  <script src="studio.js?v=20261004l"></script>
+</body>
+</html>
