@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#f5f3eb" />
   <title>LichtArts — Envision. Explain. Evolve.</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261005a" />
+  <link rel="stylesheet" href="styles.css?v=20261005b" />
 </head>
 <body>
   <div class="paper-noise" aria-hidden="true"></div>
@@ -193,18 +193,101 @@
   </footer>
 
   <dialog class="project-dialog" id="projectDialog">
-    <button class="dialog-close" type="button" aria-label="Close project">×</button>
-    <div class="dialog-art" id="dialogArt" hidden></div>
-    <div class="dialog-copy">
-      <span class="section-number" id="dialogMeta"></span>
-      <h2 id="dialogTitle"></h2>
-      <div class="dialog-description" id="dialogDescription"></div>
-      <div class="dialog-tags" id="dialogTags"></div>
+    <div class="project-viewer-shell">
+      <header class="project-viewer-topbar">
+        <div class="project-viewer-identity">
+          <span class="brand-mark project-viewer-mark" aria-hidden="true"><span>L</span></span>
+          <div>
+            <strong id="dialogTopTitle">Project</strong>
+            <small>Licht Arts <span>·</span> <a href="workspace.html" target="_blank" rel="noreferrer">Edit Project</a></small>
+          </div>
+        </div>
+        <button class="dialog-close" type="button" aria-label="Close project">×</button>
+      </header>
+
+      <aside class="project-action-rail" aria-label="Project actions">
+        <button type="button" class="project-rail-action project-rail-brand" aria-label="Licht Arts">
+          <span class="brand-mark project-rail-mark" aria-hidden="true"><span>L</span></span>
+        </button>
+        <button type="button" class="project-rail-action" id="projectToolsAction">
+          <b>Ps</b><span>Tools</span>
+        </button>
+        <button type="button" class="project-rail-action" id="projectSaveAction">
+          <b>▰</b><span>Save</span>
+        </button>
+        <button type="button" class="project-rail-action" id="projectShareAction">
+          <b>⇧</b><span>Share</span>
+        </button>
+        <button type="button" class="project-rail-action" id="projectAppreciateAction">
+          <b>♥</b><span>Appreciate</span>
+        </button>
+      </aside>
+
+      <main class="project-viewer-main">
+        <section class="project-viewer-content" id="projectViewerContent">
+          <div class="dialog-description" id="dialogDescription"></div>
+        </section>
+
+        <section class="project-summary-band">
+          <div class="project-appreciation-badge">
+            <span>♥</span>
+            <b id="dialogAppreciationCount">0</b>
+          </div>
+          <span class="section-number" id="dialogMeta"></span>
+          <h2 id="dialogTitle"></h2>
+          <div class="project-summary-stats">
+            <span>♥ <b id="dialogLikeCount">0</b></span>
+            <span>◉ <b id="dialogViewCount">1</b></span>
+            <span>● <b>0</b></span>
+          </div>
+          <p id="dialogPublishedDate"></p>
+          <div class="dialog-tags" id="dialogTags"></div>
+        </section>
+
+        <section class="project-more-band">
+          <div class="project-owner-row">
+            <div class="project-owner-identity">
+              <span class="brand-mark project-owner-mark" aria-hidden="true"><span>L</span></span>
+              <div>
+                <strong>Licht Arts</strong>
+                <a href="workspace.html" target="_blank" rel="noreferrer">Edit Project</a>
+              </div>
+            </div>
+            <span>More work from Licht Arts</span>
+          </div>
+          <div class="project-related-grid" id="dialogRelatedProjects"></div>
+        </section>
+
+        <section class="project-discussion">
+          <div class="project-comment-card">
+            <div class="project-comment-avatar"><span class="brand-mark"><span>L</span></span></div>
+            <div class="project-comment-box">
+              <textarea id="projectCommentInput" rows="5" placeholder="What are your thoughts on this project?"></textarea>
+              <button type="button" id="projectCommentButton" disabled>Post a Comment</button>
+            </div>
+          </div>
+
+          <aside class="project-owner-card">
+            <span>OWNER</span>
+            <div>
+              <span class="brand-mark project-owner-card-mark" aria-hidden="true"><span>L</span></span>
+              <div>
+                <strong>Licht Arts</strong>
+                <small>General Santos, Philippines</small>
+              </div>
+            </div>
+            <div class="project-owner-meta">
+              <strong id="dialogOwnerProjectTitle">Project</strong>
+              <small id="dialogOwnerProjectMeta">Licht Arts</small>
+            </div>
+          </aside>
+        </section>
+      </main>
     </div>
   </dialog>
 
   <script src="cms-api.js?v=20261004e" defer></script>
   <script src="cms-runtime.js?v=20261005a" defer></script>
-  <script src="app.js?v=20261004ab" defer></script>
+  <script src="app.js?v=20261005b" defer></script>
 </body>
 </html>
