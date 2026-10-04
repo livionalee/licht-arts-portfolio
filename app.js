@@ -223,6 +223,49 @@ function openProject(index) {
   dialogDescription.innerHTML = projectContentHtml(project);
   dialogTags.innerHTML = (project.tags || []).map(tag => `<span>${escapeProjectText(tag)}</span>`).join('');
 
+  const settings = project.settings && typeof project.settings === 'object' ? project.settings : {};
+  const style = settings.style && typeof settings.style === 'object' ? settings.style : {};
+  const background = /^#[0-9a-f]{6}$/i.test(style.background || '') ? style.background : '';
+  const spacing = Number.isFinite(Number(style.spacing)) ? Math.max(0,Math.min(80,Number(style.spacing))) : 28;
+  const rounded = style.rounded !== false;
+
+  if (background) {
+    const r=parseInt(background.slice(1,3),16);
+    const g=parseInt(background.slice(3,5),16);
+    const b=parseInt(background.slice(5,7),16);
+    const lum=(0.2126*r+0.7152*g+0.0722*b)/255;
+    dialog.style.setProperty('--project-bg',background);
+    dialog.style.setProperty('--project-fg',lum>.58?'#0b0c0b':'#f4f6f1');
+    dialog.style.setProperty('--project-muted',lum>.58?'#59615b':'#aab2aa');
+  } else {
+    dialog.style.removeProperty('--project-bg');
+    dialog.style.removeProperty('--project-fg');
+    dialog.style.removeProperty('--project-muted');
+  }
+
+  dialog.style.setProperty('--project-spacing',spacing+'px');
+  dialog.classList.toggle('project-square',!rounded);
+
+  dialogDescription.querySelectorAll('blockquote[data-project-embed] a').forEach(link => {
+    let parsed;
+    try { parsed=new URL(link.href); } catch { return; }
+    const host=parsed.hostname.replace(/^www\./,'').toLowerCase();
+    const allowed=['sketchfab.com','youtube.com','youtu.be','vimeo.com'].some(domain=>host===domain||host.endsWith('.'+domain));
+    if (!allowed) return;
+
+    let src=link.href;
+    if (host==='youtu.be') src='https://www.youtube.com/embed/'+parsed.pathname.replace(/^\//,'');
+    else if (host.endsWith('youtube.com')&&parsed.searchParams.get('v')) src='https://www.youtube.com/embed/'+parsed.searchParams.get('v');
+    else if (host.endsWith('vimeo.com')&&!host.startsWith('player.')) src='https://player.vimeo.com/video/'+parsed.pathname.split('/').filter(Boolean).pop();
+
+    const frame=document.createElement('iframe');
+    frame.src=src;
+    frame.loading='lazy';
+    frame.allowFullscreen=true;
+    frame.allow='autoplay; fullscreen; xr-spatial-tracking';
+    link.closest('blockquote')?.replaceWith(frame);
+  });
+
   if (!dialog.open) dialog.showModal();
 }
 
@@ -263,7 +306,8 @@ async function loadCmsProjects() {
       cover: project.cover || '',
       art: project.cover ? '' : fallbackProjects[index % fallbackProjects.length]?.art,
       tags: Array.isArray(project.tags) ? project.tags : [],
-      behanceUrl: project.behance_url || ''
+      behanceUrl: project.behance_url || '',
+      settings: project.settings || {}
     }));
 
     renderProjects();
