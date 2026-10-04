@@ -973,78 +973,130 @@ footer p{
 .back-top{color:var(--ink);font-weight:760}
 
 .project-dialog{
-  width:min(1060px,calc(var(--layout-vw, 1vw) * 94));
-  max-height:88vh;
+  width:min(1180px,calc(100vw - 48px));
+  max-height:92vh;
   padding:0;
   border:1px solid var(--line);
+  border-radius:14px;
   background:var(--paper);
   color:var(--ink);
   box-shadow:0 34px 100px rgba(0,0,0,.32);
-  overflow:auto;
+  overflow-x:hidden;
+  overflow-y:auto;
 }
-.project-dialog::backdrop{background:rgba(4,10,5,.62);backdrop-filter:blur(7px)}
+.project-dialog::backdrop{
+  background:rgba(4,10,5,.68);
+  backdrop-filter:blur(9px);
+}
 .project-dialog[open]{
-  display:grid;
-  grid-template-columns:1.1fr .9fr;
+  display:block;
   animation:dialog-in .28s var(--ease);
 }
-@keyframes dialog-in{from{opacity:0;transform:translateY(16px) scale(.985)}}
+@keyframes dialog-in{
+  from{opacity:0;transform:translateY(16px) scale(.985)}
+}
 .dialog-close{
-  grid-column:1/-1;
   position:sticky;
   top:16px;
-  z-index:5;
-  margin:16px 16px 0 auto;
+  z-index:20;
+  float:right;
+  margin:16px 16px -58px 0;
   width:42px;
   aspect-ratio:1;
-  border:1px solid var(--line);
+  border:1px solid color-mix(in srgb,var(--line) 70%,transparent);
   border-radius:50%;
-  background:var(--paper);
+  background:color-mix(in srgb,var(--paper) 86%,transparent);
+  backdrop-filter:blur(10px);
+  color:var(--ink);
   font-size:25px;
 }
 .dialog-art{
-  min-height:480px;
-  margin-top:-58px;
+  width:100%;
+  min-height:0;
+  aspect-ratio:2 / 1;
+  margin:0;
   background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center;
+  border-bottom:1px solid var(--line);
 }
-.dialog-copy{padding:64px 48px;display:flex;flex-direction:column;justify-content:center}
+.dialog-copy{
+  padding:52px clamp(24px,6vw,76px) 72px;
+  display:block;
+}
+.dialog-copy > .section-number,
+.dialog-copy > h2,
+.dialog-copy > .dialog-tags{
+  max-width:900px;
+  margin-left:auto;
+  margin-right:auto;
+}
 .dialog-copy h2{
-  margin:14px 0 20px;
+  margin-top:14px;
+  margin-bottom:24px;
   font-family:Arial Black,Impact,sans-serif;
-  font-size:clamp(3.2rem,calc(var(--layout-vw, 1vw) * 5.5),6rem);
+  font-size:clamp(3rem,7vw,6.5rem);
   line-height:.88;
   letter-spacing:-.06em;
   font-style:italic;
 }
 .dialog-copy p{color:var(--muted)}
-.dialog-description{color:var(--muted);line-height:1.7}
-.dialog-description p{margin:0 0 1em}
-.dialog-description h2,.dialog-description h3{
-  margin:1.15em 0 .45em;
+.dialog-description{
+  max-width:900px;
+  margin:0 auto;
+  color:var(--muted);
+  line-height:1.75;
+  font-size:15px;
+}
+.dialog-description p{margin:0 0 1.15em}
+.dialog-description h2,
+.dialog-description h3{
+  margin:1.35em 0 .5em;
   font-family:inherit;
   font-style:normal;
   letter-spacing:-.02em;
   line-height:1.15;
   color:var(--ink);
 }
-.dialog-description h2{font-size:1.75rem}
-.dialog-description h3{font-size:1.35rem}
-.dialog-description ul,.dialog-description ol{padding-left:1.4em}
+.dialog-description h2{font-size:2rem}
+.dialog-description h3{font-size:1.45rem}
+.dialog-description ul,
+.dialog-description ol{
+  margin:1em 0 1.35em;
+  padding-left:1.5em;
+}
 .dialog-description blockquote{
-  margin:1.1em 0;
-  padding:10px 14px;
+  margin:1.35em 0;
+  padding:14px 18px;
   border-left:3px solid var(--green);
   background:color-mix(in srgb,var(--green) 6%,transparent);
 }
-.dialog-description a{color:var(--green);text-decoration:underline;text-underline-offset:3px}
+.dialog-description a{
+  color:var(--green);
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
 .dialog-description img{
   display:block;
   width:100%;
+  max-width:100%;
   height:auto;
-  margin:18px 0;
+  margin:28px auto;
+  border-radius:8px;
 }
-.dialog-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.dialog-tags span{font-size:9px;padding:7px 10px;border:1px solid var(--line);border-radius:999px}
+.dialog-description img + img{margin-top:14px}
+.dialog-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:28px;
+}
+.dialog-tags span{
+  font-size:9px;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+}
 
 .reveal{
   opacity:0;
@@ -1180,9 +1232,16 @@ footer p{
   .contact{min-height:700px;display:block}
   .contact-mark{width:calc(var(--layout-vw, 1vw) * 72);margin:60px 0 -170px calc(var(--layout-vw, 1vw) * 28)}
   footer{padding:28px 20px;flex-direction:column;align-items:flex-start}
-  .project-dialog[open]{grid-template-columns:1fr}
-  .dialog-art{min-height:300px;margin-top:-58px}
-  .dialog-copy{padding:42px 24px}
+  .project-dialog{
+    width:calc(100vw - 20px);
+    max-height:94vh;
+    border-radius:10px;
+  }
+  .dialog-art{aspect-ratio:16 / 9}
+  .dialog-copy{padding:34px 18px 48px}
+  .dialog-copy h2{font-size:clamp(2.5rem,12vw,4rem)}
+  .dialog-description{font-size:14px}
+  .dialog-description img{margin:20px auto}
 }
 
 @media(prefers-reduced-motion:reduce){
