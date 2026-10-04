@@ -942,23 +942,80 @@
     showWorkspaceToast('Crop editor ready — drag, zoom, then choose Use crop','busy',2200);
   }
 
+  function trimTransparentCrop(sourceCanvas) {
+    const ctx = sourceCanvas.getContext('2d',{willReadFrequently:true});
+    const {width,height} = sourceCanvas;
+    const pixels = ctx.getImageData(0,0,width,height).data;
+
+    let minX=width, minY=height, maxX=-1, maxY=-1;
+    const alphaThreshold = 8;
+
+    for (let y=0;y<height;y++) {
+      for (let x=0;x<width;x++) {
+        const alpha = pixels[(y*width+x)*4+3];
+        if (alpha <= alphaThreshold) continue;
+        if (x<minX) minX=x;
+        if (x>maxX) maxX=x;
+        if (y<minY) minY=y;
+        if (y>maxY) maxY=y;
+      }
+    }
+
+    if (maxX < minX || maxY < minY) {
+      return {canvas:sourceCanvas,width,height,trimmed:false};
+    }
+
+    const padding = Math.max(2,Math.round(Math.min(width,height)*.006));
+    minX=Math.max(0,minX-padding);
+    minY=Math.max(0,minY-padding);
+    maxX=Math.min(width-1,maxX+padding);
+    maxY=Math.min(height-1,maxY+padding);
+
+    const cropW=maxX-minX+1;
+    const cropH=maxY-minY+1;
+
+    // Avoid a needless re-canvas if the visible pixels already fill the crop.
+    if (cropW >= width-2 && cropH >= height-2) {
+      return {canvas:sourceCanvas,width,height,trimmed:false};
+    }
+
+    const output=document.createElement('canvas');
+    output.width=cropW;
+    output.height=cropH;
+    const out=output.getContext('2d');
+    out.imageSmoothingEnabled=true;
+    out.imageSmoothingQuality='high';
+    out.drawImage(sourceCanvas,minX,minY,cropW,cropH,0,0,cropW,cropH);
+
+    return {canvas:output,width:cropW,height:cropH,trimmed:true};
+  }
+
   async function homeCropToFile() {
     const canvas = homeCropCanvas();
     const original = homeCropState.file;
     if (!canvas || !original) throw new Error('There is no crop to export.');
 
+    const fitted = trimTransparentCrop(canvas);
+    const exportCanvas = fitted.canvas;
+
     const blob = await new Promise((resolve,reject) => {
-      canvas.toBlob(result => {
+      exportCanvas.toBlob(result => {
         if (result) resolve(result);
         else reject(new Error('Could not create the cropped image.'));
       },'image/png');
     });
 
     const baseName = original.name.replace(/\.[^.]+$/,'') || 'image';
-    return new File([blob],baseName + '-cropped.png',{
-      type:'image/png',
-      lastModified:Date.now()
-    });
+    return {
+      file:new File([blob],baseName + '-cropped.png',{
+        type:'image/png',
+        lastModified:Date.now()
+      }),
+      width:fitted.width,
+      height:fitted.height,
+      ratio:fitted.width / fitted.height,
+      trimmed:fitted.trimmed
+    };
   }
 
   function closeHomeCropper() {
@@ -1077,7 +1134,16 @@
     $('#homeContentActionStatus').textContent = 'Homepage content changed';
   }
 
-  async function uploadHomeContentImage(file,targetId) {
+  function homeImageFrameKey(targetId) {
+    return ({
+      homeEnvisionImage:'processEnvisionImageFrame',
+      homeExplainImage:'processExplainImageFrame',
+      homeEvolveImage:'processEvolveImageFrame',
+      homeContactMarkImage:'contactMarkImageFrame'
+    })[targetId] || '';
+  }
+
+  async function uploadHomeContentImage(file,targetId,frameMeta=null) {
     if (!file) throw new Error('No image selected.');
     if (!targetId) throw new Error('No image target selected.');
 
@@ -1104,6 +1170,20 @@
     if (!result?.url) throw new Error('Upload completed without an image URL.');
 
     target.value = result.url;
+
+    const frameKey = homeImageFrameKey(targetId);
+    if (frameKey && frameMeta && Number(frameMeta.width)>0 && Number(frameMeta.height)>0) {
+      siteDraftConfig.content = {
+        ...(siteDraftConfig.content || {}),
+        [frameKey]:{
+          width:Math.round(Number(frameMeta.width)),
+          height:Math.round(Number(frameMeta.height)),
+          ratio:Number(frameMeta.ratio) || (Number(frameMeta.width)/Number(frameMeta.height)),
+          fitted:true
+        }
+      };
+    }
+
     target.dispatchEvent(new Event('input',{bubbles:true}));
     updateHomeImagePreview(targetId);
     markHomeContentDirty();
@@ -1593,8 +1673,13 @@
     button.textContent = 'Cropping…';
 
     try {
-      const croppedFile = await homeCropToFile();
-      await uploadHomeContentImage(croppedFile,targetId);
+      const cropped = await homeCropToFile();
+      await uploadHomeContentImage(cropped.file,targetId,cropped);
+      showWorkspaceToast(
+        cropped.trimmed ? 'Crop applied + transparent canvas trimmed ✓' : 'Crop applied + layer canvas fitted ✓',
+        'success',
+        3600
+      );
       closeHomeCropper();
     } catch (error) {
       const message = 'Crop/upload failed: ' + (error?.message || 'Unknown error');
