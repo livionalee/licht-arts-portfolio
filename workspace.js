@@ -643,23 +643,63 @@
 
   async function saveProject(status) {
     const payload = projectPayload(status);
+    const publishButton = $('#publishProject');
+    const draftButton = $('#saveProjectDraft');
+    const isUpdate = Boolean(activeProjectId);
+
     if (!payload.title) {
       $('#projectSaveStatus').textContent = 'Title is required';
       $('#projectTitle').focus();
       return;
     }
 
-    $('#projectSaveStatus').textContent = status === 'published' ? 'Publishing…' : 'Saving draft…';
-    const data = await apiCall({ action:'project-save', project:payload });
-    const saved = data.project;
-    const index = adminProjects.findIndex(item => item.id === saved.id);
-    if (index >= 0) adminProjects[index] = saved;
-    else adminProjects.push(saved);
+    publishButton.disabled = true;
+    draftButton.disabled = true;
 
-    activeProjectId = saved.id;
-    projectDirty = false;
-    openProjectEditor(saved.id);
-    $('#projectSaveStatus').textContent = status === 'published' ? 'Published ✓' : 'Draft saved';
+    if (status === 'published') {
+      publishButton.textContent = isUpdate ? 'Updating…' : 'Publishing…';
+      $('#projectSaveStatus').textContent = isUpdate ? 'Updating project…' : 'Publishing project…';
+    } else {
+      draftButton.textContent = 'Saving…';
+      $('#projectSaveStatus').textContent = 'Saving draft…';
+    }
+
+    try {
+      const data = await apiCall({ action:'project-save', project:payload });
+      if (!data?.project?.id) throw new Error('Project save returned no project record.');
+
+      activeProjectId = data.project.id;
+      projectDirty = false;
+
+      // Always re-fetch from Supabase so the editor reflects the actual persisted row,
+      // not a stale local object.
+      await loadProjects();
+      const persisted = adminProjects.find(item => item.id === activeProjectId) || data.project;
+      if (!adminProjects.some(item => item.id === persisted.id)) adminProjects.push(persisted);
+
+      openProjectEditor(persisted.id);
+
+      if (status === 'published') {
+        $('#projectSaveStatus').textContent = isUpdate ? 'Updated ✓' : 'Published ✓';
+        publishButton.textContent = isUpdate ? 'Updated ✓' : 'Published ✓';
+      } else {
+        $('#projectSaveStatus').textContent = 'Draft saved ✓';
+        draftButton.textContent = 'Saved ✓';
+      }
+
+      window.setTimeout(() => {
+        publishButton.textContent = activeProjectId ? 'Update Project' : 'Publish Project';
+        draftButton.textContent = 'Save draft';
+      }, 1400);
+    } catch (error) {
+      $('#projectSaveStatus').textContent = 'Save failed: ' + (error?.message || 'Unknown error');
+      publishButton.textContent = activeProjectId ? 'Update Project' : 'Publish Project';
+      draftButton.textContent = 'Save draft';
+      throw error;
+    } finally {
+      publishButton.disabled = false;
+      draftButton.disabled = false;
+    }
   }
 
   async function toggleProjectHidden() {
@@ -790,8 +830,8 @@
   $('#newProjectBtn')?.addEventListener('click', newProjectEditor);
   $('#projectSearch')?.addEventListener('input', renderProjectList);
   $('#projectStatusFilter')?.addEventListener('change', renderProjectList);
-  $('#saveProjectDraft')?.addEventListener('click', () => saveProject('draft').catch(error => $('#projectSaveStatus').textContent = error.message));
-  $('#publishProject')?.addEventListener('click', () => saveProject('published').catch(error => $('#projectSaveStatus').textContent = error.message));
+  $('#saveProjectDraft')?.addEventListener('click', () => saveProject('draft').catch(() => {}));
+  $('#publishProject')?.addEventListener('click', () => saveProject('published').catch(() => {}));
   $('#hideProjectBtn')?.addEventListener('click', () => toggleProjectHidden().catch(error => $('#projectSaveStatus').textContent = error.message));
   $('#deleteProjectBtn')?.addEventListener('click', () => deleteActiveProject().catch(error => $('#projectSaveStatus').textContent = error.message));
   $('#uploadProjectCover')?.addEventListener('click', () => $('#projectCoverInput').click());
