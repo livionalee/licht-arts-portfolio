@@ -1845,3 +1845,44 @@ html[data-proportion-lock="desktop"]{
   .project-related-grid{grid-template-columns:1fr 1fr;gap:10px}
   .project-comment-card{grid-template-columns:1fr;padding:18px}
 }
+
+.footer-socials{
+  justify-self:center;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.footer-social-link{
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:color-mix(in srgb,var(--paper) 92%,transparent);
+  color:var(--ink);
+  transition:transform .2s var(--ease),border-color .2s var(--ease),background .2s var(--ease),color .2s var(--ease);
+}
+.footer-social-link svg{
+  width:16px;
+  height:16px;
+  fill:currentColor;
+}
+.footer-social-link:hover{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--green) 70%,var(--line));
+  background:var(--green);
+  color:#fff;
+}
+.footer-social-link.is-disabled{
+  cursor:default;
+}
+.footer-social-link.is-disabled:hover{
+  transform:none;
+  background:color-mix(in srgb,var(--paper) 92%,transparent);
+  color:var(--ink);
+  border-color:var(--line);
+}
+@media(max-device-width:720px){
+  .footer-socials{justify-self:start}
+}
