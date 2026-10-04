@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>LichtArts Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css?v=20261004a" />
+  <link rel="stylesheet" href="dashboard.css?v=20261004b" />
 </head>
 <body>
   <section class="dash-login" id="dashLogin">
@@ -96,14 +96,105 @@
       </section>
 
       <section class="dash-view" data-view="projects">
-        <div class="section-intro">
-          <div><p class="eyebrow">CONTENT</p><h2>Projects</h2><p>Review the work currently used by your portfolio gallery.</p></div>
-          <span class="info-badge">6 projects</span>
+        <div class="section-intro project-editor-intro">
+          <div>
+            <p class="eyebrow">CONTENT EDITOR</p>
+            <h2>Projects</h2>
+            <p>Nayeon-style publishing workflow, rebuilt in the LichtArts visual system.</p>
+          </div>
+          <button class="primary-btn button-reset" id="newProjectBtn">+ New project</button>
         </div>
-        <div class="project-admin-grid" id="projectAdminGrid"></div>
-        <div class="notice-card">
-          <strong>Project CMS separation</strong>
-          <p>Project content is currently sourced from the website code. The Dashboard is now separated from Atelier; project create/edit controls can be moved here next without adding content-management panels to the visual editor.</p>
+
+        <div class="content-editor">
+          <aside class="content-list-panel">
+            <div class="content-list-toolbar">
+              <input id="projectSearch" type="search" placeholder="Search projects…" />
+              <select id="projectStatusFilter">
+                <option value="all">All</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </div>
+            <div class="content-list" id="projectList"></div>
+          </aside>
+
+          <section class="content-form-panel">
+            <div class="editor-empty" id="projectEditorEmpty">
+              <span>✦</span>
+              <strong>Select a project</strong>
+              <p>Choose an item from the list, or create a new project.</p>
+            </div>
+
+            <form id="projectForm" hidden>
+              <input type="hidden" id="projectId" />
+
+              <div class="form-heading">
+                <div>
+                  <span class="form-state" id="projectState">DRAFT</span>
+                  <h3 id="projectFormHeading">New project</h3>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="ghost-btn" id="hideProjectBtn">Hide</button>
+                  <button type="button" class="ghost-btn danger-text" id="deleteProjectBtn">Delete</button>
+                </div>
+              </div>
+
+              <div class="editor-form-grid">
+                <label class="span-2">Title
+                  <input id="projectTitle" required placeholder="Project title" />
+                </label>
+
+                <label>Category
+                  <input id="projectCategory" placeholder="Illustration" />
+                </label>
+
+                <label>Sort order
+                  <input id="projectSortOrder" type="number" step="1" value="0" />
+                </label>
+
+                <label class="span-2">Excerpt
+                  <textarea id="projectExcerpt" rows="3" placeholder="Short description shown in cards and previews."></textarea>
+                </label>
+
+                <label class="span-2">Full content
+                  <textarea id="projectContent" rows="9" placeholder="Full project write-up. Markdown-friendly plain text."></textarea>
+                </label>
+
+                <label class="span-2">Tags
+                  <input id="projectTags" placeholder="illustration, branding, game art" />
+                  <small>Comma separated</small>
+                </label>
+
+                <div class="cover-field span-2">
+                  <label>Cover image URL
+                    <input id="projectCover" placeholder="https://… or upload an image" />
+                  </label>
+                  <button type="button" class="ghost-btn" id="uploadProjectCover">Upload cover</button>
+                  <input id="projectCoverInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                </div>
+
+                <div class="cover-preview-wrap span-2">
+                  <div class="cover-preview" id="projectCoverPreview"><span>No cover</span></div>
+                </div>
+
+                <label class="span-2">Behance URL
+                  <input id="projectBehance" type="url" placeholder="https://www.behance.net/gallery/…" />
+                </label>
+              </div>
+
+              <div class="publish-bar">
+                <div>
+                  <strong id="projectSaveStatus">No unsaved changes</strong>
+                  <small>Drafts stay private. Publish makes the project available to the live portfolio.</small>
+                </div>
+                <div class="publish-actions">
+                  <button type="button" class="secondary-btn button-reset" id="saveProjectDraft">Save draft</button>
+                  <button type="button" class="primary-btn button-reset" id="publishProject">Publish</button>
+                </div>
+              </div>
+            </form>
+          </section>
         </div>
       </section>
 
@@ -141,6 +232,6 @@
   </div>
 
   <script src="cms-api.js?v=20261004g"></script>
-  <script src="dashboard.js?v=20261004a"></script>
+  <script src="dashboard.js?v=20261004b"></script>
 </body>
 </html>
