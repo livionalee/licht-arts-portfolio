@@ -209,8 +209,20 @@
   }
 
   function runEditorCommand(command, value = null) {
+    const editor = $('#projectContent');
+    if (!editor) return;
+
     restoreEditorSelection();
-    document.execCommand(command, false, value);
+
+    try {
+      document.execCommand(command, false, value);
+    } catch (error) {
+      console.error('Rich editor command failed:', command, error);
+      $('#projectSaveStatus').textContent = 'Formatting command failed';
+      return;
+    }
+
+    editor.focus();
     saveEditorSelection();
     markProjectDirty();
   }
@@ -495,12 +507,11 @@
 
   $('.rich-editor-toolbar [data-editor-block]').forEach(button => {
     button.addEventListener('mousedown', event => event.preventDefault());
-    button.addEventListener('click', () => runEditorCommand('formatBlock', button.dataset.editorBlock));
+    button.addEventListener('click', () => runEditorCommand('formatBlock', '<' + button.dataset.editorBlock + '>'));
   });
 
   $('#projectInsertLink')?.addEventListener('mousedown', event => event.preventDefault());
   $('#projectInsertLink')?.addEventListener('click', () => {
-    saveEditorSelection();
     const href = prompt('Enter link URL');
     if (!href) return;
     runEditorCommand('createLink', href);
