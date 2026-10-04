@@ -1307,3 +1307,23 @@ html[data-proportion-lock="desktop"]{
   .dialog-description [data-project-grid]{grid-template-columns:1fr;gap:10px}
   .dialog-description [data-project-grid] img{min-height:0}
 }
+
+.project-dialog{
+  background:var(--project-bg,var(--paper));
+  color:var(--project-fg,var(--ink));
+}
+.dialog-copy{background:var(--project-bg,var(--paper))}
+.dialog-copy h2,.dialog-description h2,.dialog-description h3{color:var(--project-fg,var(--ink))}
+.dialog-description{display:flex;flex-direction:column;gap:var(--project-spacing,28px);color:var(--project-muted,var(--muted))}
+.dialog-description>*{margin-top:0!important;margin-bottom:0!important}
+.dialog-description img{margin:0 auto!important;border-radius:10px}
+.dialog-description [data-project-grid]{margin:0!important;gap:var(--project-spacing,14px)}
+.dialog-description blockquote{margin:0!important}
+.dialog-description hr{margin:0!important}
+.dialog-description iframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000}
+.project-dialog.project-square,
+.project-dialog.project-square .dialog-close,
+.project-dialog.project-square .dialog-description img,
+.project-dialog.project-square .dialog-description iframe,
+.project-dialog.project-square .dialog-description blockquote,
+.project-dialog.project-square .dialog-description [data-project-grid] img{border-radius:0!important}
