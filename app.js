@@ -1,3 +1,20 @@
+function lockDesktopProportions() {
+  const finePointer = window.matchMedia('(pointer:fine)').matches;
+  const desktopDevice = Math.max(screen.width || 0, screen.height || 0) >= 1024;
+
+  if (!finePointer || !desktopDevice) return;
+
+  const width = Math.max(window.innerWidth, 1181);
+  const height = Math.max(window.innerHeight, 700);
+
+  document.documentElement.dataset.proportionLock = 'desktop';
+  document.documentElement.style.setProperty('--layout-width', width + 'px');
+  document.documentElement.style.setProperty('--layout-vw', (width / 100) + 'px');
+  document.documentElement.style.setProperty('--layout-svh', (height / 100) + 'px');
+}
+
+lockDesktopProportions();
+
 const fallbackProjects = [
   {
     title: 'Beyond the Clouds',
