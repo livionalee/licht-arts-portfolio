@@ -24,6 +24,32 @@
     adult:false
   };
 
+  let siteDraftConfig = { version:1, managed:{}, customElements:[], content:{} };
+  let pendingHomeUploadTarget = null;
+
+  const homeDefaults = {
+    processIntroLine1:'From an idea',
+    processIntroLine2:'to something memorable.',
+    processIntroText:'Simple steps, strong direction, and enough room for the work to surprise us.',
+    processEnvisionTitle:'Envision',
+    processEnvisionText:'Shape the story, mood, references, and visual direction before polishing details.',
+    processEnvisionImage:'assets/hero/hq/hero-character.webp',
+    processExplainTitle:'Explain',
+    processExplainText:'Turn the concept into a visual system that communicates clearly and consistently.',
+    processExplainImage:'assets/hero/hq/hero-character.webp',
+    processEvolveTitle:'Evolve',
+    processEvolveText:'Refine, extend, and adapt the work until it feels complete but still alive.',
+    processEvolveImage:'assets/hero/hq/hero-character.webp',
+    contactEyebrow:'04 / Contact',
+    contactLine1:'Have an idea?',
+    contactLine2:'Let it grow.',
+    contactText:'See more work, project studies, and visual experiments on Behance.',
+    contactButtonLabel:'Visit my Behance',
+    contactButtonHref:'https://www.behance.net/louirodila',
+    contactMarkLetter:'L',
+    contactMarkImage:''
+  };
+
   let session = JSON.parse(localStorage.getItem('licht-atelier-session') || 'null');
 
   async function apiCall(body, auth = true) {
@@ -749,6 +775,98 @@
     $('#projectSaveStatus').textContent = 'Cover uploaded · unsaved changes';
   }
 
+  const homeFieldMap = {
+    homeProcessIntroLine1:'processIntroLine1',
+    homeProcessIntroLine2:'processIntroLine2',
+    homeProcessIntroText:'processIntroText',
+    homeEnvisionTitle:'processEnvisionTitle',
+    homeEnvisionText:'processEnvisionText',
+    homeEnvisionImage:'processEnvisionImage',
+    homeExplainTitle:'processExplainTitle',
+    homeExplainText:'processExplainText',
+    homeExplainImage:'processExplainImage',
+    homeEvolveTitle:'processEvolveTitle',
+    homeEvolveText:'processEvolveText',
+    homeEvolveImage:'processEvolveImage',
+    homeContactEyebrow:'contactEyebrow',
+    homeContactLine1:'contactLine1',
+    homeContactLine2:'contactLine2',
+    homeContactText:'contactText',
+    homeContactButtonLabel:'contactButtonLabel',
+    homeContactButtonHref:'contactButtonHref',
+    homeContactMarkLetter:'contactMarkLetter',
+    homeContactMarkImage:'contactMarkImage'
+  };
+
+  function normalizedHomeContent() {
+    return { ...homeDefaults, ...(siteDraftConfig.content || {}) };
+  }
+
+  function populateHomeContentEditor() {
+    const content = normalizedHomeContent();
+    Object.entries(homeFieldMap).forEach(([id,key]) => {
+      const field = document.getElementById(id);
+      if (field) field.value = content[key] ?? '';
+    });
+    $('#homeContentStatus').textContent = 'Draft loaded';
+    $('#homeContentActionStatus').textContent = '';
+  }
+
+  function readHomeContentEditor() {
+    const content = { ...(siteDraftConfig.content || {}) };
+    Object.entries(homeFieldMap).forEach(([id,key]) => {
+      const field = document.getElementById(id);
+      if (field) content[key] = field.value;
+    });
+    return content;
+  }
+
+  function markHomeContentDirty() {
+    $('#homeContentStatus').textContent = 'Unsaved changes';
+    $('#homeContentActionStatus').textContent = 'Homepage content changed';
+  }
+
+  async function uploadHomeContentImage(file,targetId) {
+    if (!file || !targetId) return;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    $('#homeContentActionStatus').textContent = 'Uploading image…';
+    const base64 = await new Promise((resolve,reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const result = await apiCall({
+      action:'upload',
+      name:file.name,
+      contentType:file.type,
+      base64
+    });
+
+    target.value = result.url;
+    markHomeContentDirty();
+    $('#homeContentActionStatus').textContent = 'Image uploaded · unsaved changes';
+  }
+
+  async function saveHomeContent(publishNow=false) {
+    siteDraftConfig.content = readHomeContentEditor();
+    $('#homeContentActionStatus').textContent = publishNow ? 'Publishing homepage…' : 'Saving homepage draft…';
+
+    if (publishNow) {
+      await apiCall({ action:'publish', config:siteDraftConfig });
+      $('#homeContentStatus').textContent = 'Published';
+      $('#homeContentActionStatus').textContent = 'Homepage published ✓';
+      await hydrateWorkspace();
+    } else {
+      await apiCall({ action:'draft-save', config:siteDraftConfig });
+      $('#homeContentStatus').textContent = 'Draft saved';
+      $('#homeContentActionStatus').textContent = 'Homepage draft saved ✓';
+    }
+  }
+
   async function hydrateWorkspace() {
     syncPill.classList.remove('ok');
     syncPill.innerHTML = '<i></i>Checking…';
@@ -760,8 +878,15 @@
       loadProjects()
     ]);
 
-    const publishedConfig = published.config || { managed:{}, customElements:[] };
-    const draftConfig = draft.config || { managed:{}, customElements:[] };
+    const publishedConfig = published.config || { version:1, managed:{}, customElements:[], content:{} };
+    const draftConfig = draft.config || { version:1, managed:{}, customElements:[], content:{} };
+    siteDraftConfig = {
+      version:draftConfig.version || 1,
+      managed:draftConfig.managed || {},
+      customElements:Array.isArray(draftConfig.customElements) ? draftConfig.customElements : [],
+      content:draftConfig.content && typeof draftConfig.content === 'object' ? draftConfig.content : {}
+    };
+    populateHomeContentEditor();
     const same = JSON.stringify(publishedConfig) === JSON.stringify(draftConfig);
     const managedCount = Object.keys(draftConfig.managed || {}).length + (draftConfig.customElements || []).length;
     const revisionItems = revisions.revisions || [];
@@ -1058,6 +1183,33 @@
   $('#previewProject')?.addEventListener('click', () => {
     renderWorkspacePreview();
     $('#projectPreviewDialog').showModal();
+  });
+
+  Object.keys(homeFieldMap).forEach(id => {
+    document.getElementById(id)?.addEventListener('input', markHomeContentDirty);
+  });
+
+  $$('.home-upload-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      pendingHomeUploadTarget = button.dataset.homeUpload || null;
+      $('#homeContentUploadInput')?.click();
+    });
+  });
+
+  $('#homeContentUploadInput')?.addEventListener('change', () => {
+    const file = $('#homeContentUploadInput').files?.[0];
+    uploadHomeContentImage(file,pendingHomeUploadTarget)
+      .catch(error => $('#homeContentActionStatus').textContent = 'Upload failed: ' + error.message);
+    $('#homeContentUploadInput').value = '';
+    pendingHomeUploadTarget = null;
+  });
+
+  $('#saveHomeContentDraft')?.addEventListener('click', () => {
+    saveHomeContent(false).catch(error => $('#homeContentActionStatus').textContent = 'Save failed: ' + error.message);
+  });
+
+  $('#publishHomeContent')?.addEventListener('click', () => {
+    saveHomeContent(true).catch(error => $('#homeContentActionStatus').textContent = 'Publish failed: ' + error.message);
   });
 
   async function boot() {
