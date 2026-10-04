@@ -785,6 +785,13 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
       transparent 70%);
   transition:opacity .42s ease;
 }
+.process-envision::before{
+  left:min(calc(var(--layout-vw, 1vw) * -10.6),-160px);
+}
+.process-envision::after{
+  left:min(calc(var(--layout-vw, 1vw) * -10.6),-160px);
+}
+
 .process-card::after{
   content:"";
   position:absolute;
@@ -839,6 +846,11 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   background:color-mix(in srgb,var(--green) 5%,var(--paper));
   transform:translateY(-5px);
   box-shadow:0 22px 60px color-mix(in srgb,var(--green) 8%,transparent);
+}
+.process-envision:hover{
+  box-shadow:
+    min(calc(var(--layout-vw, 1vw) * -10.6),-160px) 0 0 color-mix(in srgb,var(--green) 5%,var(--paper)),
+    0 22px 60px color-mix(in srgb,var(--green) 8%,transparent);
 }
 .process-card:hover::before{opacity:1}
 .process-card:hover::after{opacity:1;transform:translateX(28%)}
@@ -1059,6 +1071,13 @@ footer p{
     grid-template-columns:1fr;
     margin-right:-40px;
   }
+  .process-envision::before,
+  .process-envision::after{left:-40px}
+  .process-envision:hover{
+    box-shadow:
+      -40px 0 0 color-mix(in srgb,var(--green) 5%,var(--paper)),
+      0 22px 60px color-mix(in srgb,var(--green) 8%,transparent);
+  }
   .process{padding-bottom:0}
   .process-grid{border-bottom:1px solid var(--line)}
   .process-card,.process-card+.process-card{
@@ -1137,6 +1156,13 @@ footer p{
   .process-grid{
     margin-top:45px;
     margin-right:-40px;
+  }
+  .process-envision::before,
+  .process-envision::after{left:-20px}
+  .process-envision:hover{
+    box-shadow:
+      -20px 0 0 color-mix(in srgb,var(--green) 5%,var(--paper)),
+      0 18px 42px color-mix(in srgb,var(--green) 7%,transparent);
   }
   .process-card{min-height:300px}
   .process-figure,
