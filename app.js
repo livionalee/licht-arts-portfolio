@@ -109,7 +109,7 @@ function sanitizeProjectHtml(value) {
   template.innerHTML = String(value || '');
 
   const allowedTags = new Set([
-    'P','BR','STRONG','B','EM','I','U','H2','H3',
+    'P','BR','STRONG','B','EM','I','U','H2','H3','HR',
     'UL','OL','LI','BLOCKQUOTE','A','IMG','DIV'
   ]);
 
@@ -124,6 +124,8 @@ function sanitizeProjectHtml(value) {
       const allowed =
         (node.tagName === 'A' && ['href','target','rel'].includes(name)) ||
         (node.tagName === 'IMG' && ['src','alt'].includes(name)) ||
+        (node.tagName === 'DIV' && name === 'data-project-grid') ||
+        (node.tagName === 'BLOCKQUOTE' && name === 'data-project-embed') ||
         (name === 'style' && ['P','DIV','H2','H3','BLOCKQUOTE'].includes(node.tagName));
 
       if (!allowed) node.removeAttribute(attribute.name);
