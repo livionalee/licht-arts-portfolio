@@ -61,3 +61,98 @@
   align-items:center;
   justify-content:center;
 }
+
+.rich-editor-field{display:grid;gap:8px}
+.rich-editor-label{display:grid;gap:4px}
+.rich-editor-label>span{
+  color:#7e8b81;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.rich-editor-label small{
+  color:#68756b;
+  font-size:9px;
+}
+.rich-editor-shell{
+  overflow:hidden;
+  border:1px solid #2c3b30;
+  border-radius:14px;
+  background:#0f1511;
+}
+.rich-editor-shell:focus-within{border-color:#3ed94a;box-shadow:0 0 0 1px #3ed94a22}
+.rich-editor-toolbar{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  min-height:49px;
+  padding:7px 9px;
+  border-bottom:1px solid #28352c;
+  background:#111813;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.rich-editor-toolbar::-webkit-scrollbar{display:none}
+.rich-editor-toolbar>span{
+  width:1px;
+  height:25px;
+  flex:none;
+  margin:0 4px;
+  background:#2c3a30;
+}
+.rich-editor-toolbar button{
+  width:34px;
+  height:34px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:7px;
+  background:transparent;
+  color:#c7d1c9;
+  cursor:pointer;
+  font-size:12px;
+}
+.rich-editor-toolbar button:hover,
+.rich-editor-toolbar button.active{
+  background:#1a2a1d;
+  color:#67ef71;
+}
+.rich-editor{
+  min-height:360px;
+  padding:22px;
+  color:#e8efea;
+  font-size:14px;
+  line-height:1.7;
+  outline:none;
+  overflow-wrap:anywhere;
+}
+.rich-editor:empty::before{
+  content:attr(data-placeholder);
+  color:#667268;
+  pointer-events:none;
+}
+.rich-editor p{margin:0 0 1em}
+.rich-editor h2{margin:1.2em 0 .45em;font-size:26px;line-height:1.12;color:#fff}
+.rich-editor h3{margin:1.15em 0 .4em;font-size:20px;line-height:1.18;color:#fff}
+.rich-editor ul,.rich-editor ol{margin:.8em 0 1em;padding-left:1.5em}
+.rich-editor blockquote{
+  margin:1.1em 0;
+  padding:10px 14px;
+  border-left:3px solid #43df4e;
+  background:#142018;
+  color:#b8c4ba;
+}
+.rich-editor a{color:#65eb6e;text-decoration:underline;text-underline-offset:3px}
+.rich-editor img{
+  display:block;
+  max-width:100%;
+  height:auto;
+  margin:18px auto;
+  border-radius:10px;
+}
+.rich-editor [style*="text-align: center"] img{margin-inline:auto}
+@media(max-width:760px){
+  .rich-editor{min-height:300px;padding:16px}
+  .rich-editor-toolbar{padding-inline:6px}
+}
