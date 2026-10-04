@@ -891,7 +891,7 @@
     if (zoom) zoom.value = '1';
     $('#homeCropZoomValue').textContent = '100%';
 
-    $('.home-crop-ratios [data-crop-ratio]').forEach(button => {
+    $$('.home-crop-ratios [data-crop-ratio]').forEach(button => {
       button.classList.toggle('active',button.dataset.cropRatio === String(key));
     });
 
@@ -1522,7 +1522,7 @@
     drawHomeCrop();
   });
 
-  $('.home-crop-ratios [data-crop-ratio]').forEach(button => {
+  $$('.home-crop-ratios [data-crop-ratio]').forEach(button => {
     button.addEventListener('click', () => setHomeCropRatio(button.dataset.cropRatio));
   });
 
