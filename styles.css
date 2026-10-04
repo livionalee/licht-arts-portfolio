@@ -603,7 +603,9 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   place-items:center;
   cursor:pointer;
   user-select:none;
-  --licht-spread:0px;
+  --licht-mx:0px;
+  --licht-my:0px;
+  --licht-rot:0deg;
 }
 .licht-copy{
   position:absolute;
@@ -635,33 +637,69 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   -webkit-text-stroke:2px color-mix(in srgb,var(--green) 90%,var(--ink));
   opacity:0;
   transition:
-    transform .72s cubic-bezier(.2,.72,.2,1),
-    opacity .48s ease;
+    transform .18s cubic-bezier(.2,.72,.2,1),
+    opacity .34s ease;
 }
 .licht-word:hover .licht-copy-1{
-  transform:translate(-120px,-128px) scaleX(1.055);
-  opacity:.5;
+  transform:
+    translate(
+      calc(-54px + var(--licht-mx) * -.55),
+      calc(-64px + var(--licht-my) * -.45)
+    )
+    rotate(calc(var(--licht-rot) * -1.35))
+    scaleX(1.025);
+  opacity:.32;
 }
 .licht-word:hover .licht-copy-2{
-  transform:translate(92px,-80px) scaleX(1.04);
-  opacity:.68;
+  transform:
+    translate(
+      calc(-28px + var(--licht-mx) * -.28),
+      calc(-34px + var(--licht-my) * -.24)
+    )
+    rotate(calc(var(--licht-rot) * -.8))
+    scaleX(1.015);
+  opacity:.5;
 }
 .licht-word:hover .licht-copy-3{
-  transform:translate(-48px,-28px) scaleX(1.025);
-  opacity:.86;
+  transform:
+    translate(
+      calc(var(--licht-mx) * -.08),
+      calc(var(--licht-my) * -.08)
+    )
+    rotate(calc(var(--licht-rot) * -.28));
+  opacity:.74;
 }
 .licht-word:hover .licht-copy-4{
-  transform:translate(70px,58px) scaleX(1.035);
-  opacity:.66;
+  transform:
+    translate(
+      calc(28px + var(--licht-mx) * .28),
+      calc(34px + var(--licht-my) * .24)
+    )
+    rotate(calc(var(--licht-rot) * .8))
+    scaleX(1.015);
+  opacity:.5;
 }
 .licht-word:hover .licht-copy-5{
-  transform:translate(-105px,108px) scaleX(1.05);
-  opacity:.46;
+  transform:
+    translate(
+      calc(54px + var(--licht-mx) * .55),
+      calc(64px + var(--licht-my) * .45)
+    )
+    rotate(calc(var(--licht-rot) * 1.35))
+    scaleX(1.025);
+  opacity:.32;
 }
 .licht-word:hover .licht-main{
   color:color-mix(in srgb,var(--green-bright) 86%,var(--green));
-  transform:scaleX(1.04) scaleY(1.018);
-  letter-spacing:-.045em;
+  transform:
+    translate(
+      calc(var(--licht-mx) * .08),
+      calc(var(--licht-my) * .06)
+    )
+    rotate(calc(var(--licht-rot) * .12))
+    scaleX(1.025)
+    scaleY(1.01);
+  letter-spacing:-.06em;
 }
 
 .falling-leaves{
@@ -952,11 +990,11 @@ footer{
   .licht-word:hover .licht-copy-3{transform:translateY(-14px);opacity:.28}
   .licht-word:hover .licht-copy-4{transform:translateY(28px);opacity:.22}
   .licht-word:hover .licht-copy-5{transform:translateY(52px);opacity:.12}
-  .licht-word:hover .licht-copy-1{transform:translate(-54px,-78px);opacity:.5}
-  .licht-word:hover .licht-copy-2{transform:translate(42px,-48px);opacity:.66}
-  .licht-word:hover .licht-copy-3{transform:translate(-22px,-18px);opacity:.82}
-  .licht-word:hover .licht-copy-4{transform:translate(32px,36px);opacity:.64}
-  .licht-word:hover .licht-copy-5{transform:translate(-46px,66px);opacity:.44}
+  .licht-word:hover .licht-copy-1{transform:translate(calc(-30px + var(--licht-mx) * -.4),calc(-42px + var(--licht-my) * -.35)) rotate(calc(var(--licht-rot) * -1.1));opacity:.28}
+  .licht-word:hover .licht-copy-2{transform:translate(calc(-16px + var(--licht-mx) * -.22),calc(-22px + var(--licht-my) * -.2)) rotate(calc(var(--licht-rot) * -.65));opacity:.44}
+  .licht-word:hover .licht-copy-3{transform:translate(calc(var(--licht-mx) * -.06),calc(var(--licht-my) * -.06)) rotate(calc(var(--licht-rot) * -.2));opacity:.68}
+  .licht-word:hover .licht-copy-4{transform:translate(calc(16px + var(--licht-mx) * .22),calc(22px + var(--licht-my) * .2)) rotate(calc(var(--licht-rot) * .65));opacity:.44}
+  .licht-word:hover .licht-copy-5{transform:translate(calc(30px + var(--licht-mx) * .4),calc(42px + var(--licht-my) * .35)) rotate(calc(var(--licht-rot) * 1.1));opacity:.28}
   .about-circle{width:190px}
   .fall-leaf{opacity:.65}
   .process-grid{margin-top:45px}
