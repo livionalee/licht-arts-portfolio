@@ -16,6 +16,13 @@
   let projectBlocks = [];
   let activeBuilderRange = null;
   let draggedBlockId = null;
+  let projectSettings = {
+    style:{ background:'', spacing:28, rounded:true },
+    categories:[],
+    tools:[],
+    visibility:'everyone',
+    adult:false
+  };
 
   let session = JSON.parse(localStorage.getItem('licht-atelier-session') || 'null');
 
@@ -178,6 +185,121 @@
     });
 
     return template.innerHTML;
+  }
+
+  function normalizeProjectSettings(value) {
+    const input = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    const style = input.style && typeof input.style === 'object' ? input.style : {};
+
+    return {
+      style:{
+        background:typeof style.background === 'string' ? style.background : '',
+        spacing:Number.isFinite(Number(style.spacing)) ? Math.max(0,Math.min(80,Number(style.spacing))) : 28,
+        rounded:style.rounded !== false
+      },
+      categories:Array.isArray(input.categories) ? input.categories.map(String).map(v=>v.trim()).filter(Boolean).slice(0,3) : [],
+      tools:Array.isArray(input.tools) ? input.tools.map(String).map(v=>v.trim()).filter(Boolean) : [],
+      visibility:input.visibility === 'private' ? 'private' : 'everyone',
+      adult:Boolean(input.adult)
+    };
+  }
+
+  function currentProjectStyle() {
+    return normalizeProjectSettings(projectSettings).style;
+  }
+
+  function projectForeground(background) {
+    if (!/^#[0-9a-f]{6}$/i.test(background || '')) {
+      return {fg:'#eef5ef',muted:'#a7aea5'};
+    }
+    const r=parseInt(background.slice(1,3),16);
+    const g=parseInt(background.slice(3,5),16);
+    const b=parseInt(background.slice(5,7),16);
+    const lum=(0.2126*r+0.7152*g+0.0722*b)/255;
+    return lum > .58 ? {fg:'#0b0c0b',muted:'#59615b'} : {fg:'#f4f6f1',muted:'#aab2aa'};
+  }
+
+  function applyBuilderProjectStyle() {
+    const main = $('.project-builder-main');
+    if (!main) return;
+    const style = currentProjectStyle();
+    main.style.setProperty('--builder-gap', style.spacing + 'px');
+    main.classList.toggle('builder-square', !style.rounded);
+    if (style.background) main.style.background = style.background;
+    else main.style.removeProperty('background');
+  }
+
+  function syncStyleDialogFromState() {
+    const style = currentProjectStyle();
+    const background = /^#[0-9a-f]{6}$/i.test(style.background) ? style.background : '#081009';
+    $('#projectBackgroundColor').value = background;
+    $('#projectBackgroundHex').value = background.toUpperCase();
+    $('#projectContentSpacing').value = String(style.spacing);
+    $('#projectContentSpacingValue').textContent = style.spacing + ' px';
+    $('#projectRoundedContent').checked = style.rounded;
+  }
+
+  function syncSettingsDialogFromState() {
+    $('#settingsProjectTitle').value = $('#projectTitle').value || '';
+    $('#settingsProjectTags').value = $('#projectTags').value || '';
+    $('#settingsProjectCategories').value = (projectSettings.categories?.length ? projectSettings.categories : [$('#projectCategory').value]).filter(Boolean).join(', ');
+    $('#settingsProjectTools').value = (projectSettings.tools || []).join(', ');
+    $('#settingsProjectVisibility').value = projectSettings.visibility || 'everyone';
+    $('#settingsProjectAdult').checked = Boolean(projectSettings.adult);
+  }
+
+  function enhancePreviewEmbeds(container) {
+    container.querySelectorAll('blockquote[data-project-embed] a').forEach(link => {
+      const href = link.href;
+      let parsed;
+      try { parsed = new URL(href); } catch { return; }
+      const host = parsed.hostname.replace(/^www\./,'').toLowerCase();
+      const allowed = ['sketchfab.com','youtube.com','youtu.be','vimeo.com'].some(domain => host === domain || host.endsWith('.'+domain));
+      if (!allowed) return;
+
+      let src = href;
+      if (host === 'youtu.be') src = 'https://www.youtube.com/embed/' + parsed.pathname.replace(/^\//,'');
+      else if (host.endsWith('youtube.com') && parsed.searchParams.get('v')) src = 'https://www.youtube.com/embed/' + parsed.searchParams.get('v');
+      else if (host.endsWith('vimeo.com') && !host.startsWith('player.')) src = 'https://player.vimeo.com/video/' + parsed.pathname.split('/').filter(Boolean).pop();
+
+      const frame = document.createElement('iframe');
+      frame.src = src;
+      frame.loading = 'lazy';
+      frame.allowFullscreen = true;
+      frame.allow = 'autoplay; fullscreen; xr-spatial-tracking';
+      link.closest('blockquote')?.replaceWith(frame);
+    });
+  }
+
+  function renderWorkspacePreview() {
+    const preview = $('#workspaceProjectPreview');
+    const content = $('#previewContent');
+    const style = currentProjectStyle();
+    const bg = style.background || '#081009';
+    const colors = projectForeground(bg);
+
+    preview.style.setProperty('--preview-bg', bg);
+    preview.style.setProperty('--preview-fg', colors.fg);
+    preview.style.setProperty('--preview-muted', colors.muted);
+    preview.style.setProperty('--preview-gap', style.spacing + 'px');
+    preview.classList.toggle('square', !style.rounded);
+
+    $('#previewCategory').textContent = projectSettings.categories?.[0] || $('#projectCategory').value || 'Project';
+    $('#previewTitle').textContent = $('#projectTitle').value || 'Untitled Project';
+    content.innerHTML = sanitizeEditorHtml(blocksToHtml());
+    enhancePreviewEmbeds(content);
+  }
+
+  function extractEmbedUrl(input) {
+    const raw = String(input || '').trim();
+    if (!raw) return '';
+    if (/^https:\/\//i.test(raw)) return raw;
+    const template = document.createElement('template');
+    template.innerHTML = raw;
+    const iframe = template.content.querySelector('iframe[src]');
+    if (iframe) return iframe.getAttribute('src') || '';
+    const link = template.content.querySelector('a[href]');
+    return link?.getAttribute('href') || '';
   }
 
   function blockId() {
@@ -441,6 +563,7 @@
 
     activeProjectId = project.id;
     projectDirty = false;
+    projectSettings = normalizeProjectSettings(project.settings);
     $('#projectEditorEmpty').hidden = true;
     $('#projectForm').hidden = false;
     $('#projectId').value = project.id;
@@ -458,13 +581,16 @@
     $('#hideProjectBtn').textContent = project.is_hidden ? 'Show' : 'Hide';
     $('#deleteProjectBtn').hidden = false;
     $('#projectSaveStatus').textContent = 'No unsaved changes';
+    $('#publishProject').textContent = 'Update Project';
     updateCoverPreview();
+    applyBuilderProjectStyle();
     renderProjectList();
   }
 
   function newProjectEditor() {
     activeProjectId = null;
     projectDirty = false;
+    projectSettings = normalizeProjectSettings({});
     $('#projectEditorEmpty').hidden = true;
     $('#projectForm').hidden = false;
     $('#projectId').value = '';
@@ -482,7 +608,9 @@
     $('#hideProjectBtn').textContent = 'Hide';
     $('#deleteProjectBtn').hidden = true;
     $('#projectSaveStatus').textContent = 'New unsaved project';
+    $('#publishProject').textContent = 'Publish Project';
     updateCoverPreview();
+    applyBuilderProjectStyle();
     renderProjectList();
   }
 
@@ -500,7 +628,8 @@
       cover: $('#projectCover').value.trim(),
       behance_url: $('#projectBehance').value.trim(),
       images: existing?.images || [],
-      is_hidden: existing?.is_hidden || false,
+      settings: normalizeProjectSettings(projectSettings),
+      is_hidden: projectSettings.visibility === 'private' ? true : (existing?.is_hidden || false),
       status: statusOverride || existing?.status || (existing?.published ? 'published' : 'draft')
     };
   }
@@ -789,11 +918,8 @@
       } else if (type === 'grid') {
         $('#builderGridInput')?.click();
       } else if (type === 'embed') {
-        const url = prompt('Paste a URL to add as an embed/link block');
-        if (!url) return;
-        let label = url;
-        try { label = new URL(url).hostname.replace(/^www\./,''); } catch {}
-        addBlock({ type:'embed', url, label });
+        $('#projectEmbedCode').value = '';
+        $('#projectEmbedDialog').showModal();
       }
     });
   });
@@ -812,6 +938,86 @@
     addImageFiles($('#builderGridInput').files, true)
       .catch(error => $('#projectSaveStatus').textContent = error.message);
     $('#builderGridInput').value = '';
+  });
+
+  $$('[data-close-dialog]').forEach(button => {
+    button.addEventListener('click', () => {
+      const dialog = document.getElementById(button.dataset.closeDialog);
+      if (dialog?.open) dialog.close();
+    });
+  });
+
+  $('#projectStylesBtn')?.addEventListener('click', () => {
+    syncStyleDialogFromState();
+    $('#projectStylesDialog').showModal();
+  });
+
+  $('#projectSettingsBtn')?.addEventListener('click', () => {
+    syncSettingsDialogFromState();
+    $('#projectSettingsDialog').showModal();
+  });
+
+  $('#projectBackgroundColor')?.addEventListener('input', () => {
+    $('#projectBackgroundHex').value = $('#projectBackgroundColor').value.toUpperCase();
+  });
+
+  $('#projectBackgroundHex')?.addEventListener('input', () => {
+    const value = $('#projectBackgroundHex').value.trim();
+    if (/^#[0-9a-f]{6}$/i.test(value)) $('#projectBackgroundColor').value = value;
+  });
+
+  $('#projectContentSpacing')?.addEventListener('input', () => {
+    $('#projectContentSpacingValue').textContent = $('#projectContentSpacing').value + ' px';
+  });
+
+  $('#projectStylesForm')?.addEventListener('submit', event => {
+    event.preventDefault();
+    const background = $('#projectBackgroundHex').value.trim();
+    projectSettings.style = {
+      background:/^#[0-9a-f]{6}$/i.test(background) ? background : '',
+      spacing:Number($('#projectContentSpacing').value || 0),
+      rounded:$('#projectRoundedContent').checked
+    };
+    applyBuilderProjectStyle();
+    markProjectDirty();
+    $('#projectStylesDialog').close();
+  });
+
+  $('#projectSettingsForm')?.addEventListener('submit', event => {
+    event.preventDefault();
+    const categories = $('#settingsProjectCategories').value.split(',').map(v=>v.trim()).filter(Boolean).slice(0,3);
+    const tools = $('#settingsProjectTools').value.split(',').map(v=>v.trim()).filter(Boolean);
+    const tags = $('#settingsProjectTags').value.split(',').map(v=>v.trim()).filter(Boolean);
+
+    $('#projectTitle').value = $('#settingsProjectTitle').value.trim();
+    $('#projectTags').value = tags.join(', ');
+    if (categories[0]) $('#projectCategory').value = categories[0];
+
+    projectSettings.categories = categories;
+    projectSettings.tools = tools;
+    projectSettings.visibility = $('#settingsProjectVisibility').value === 'private' ? 'private' : 'everyone';
+    projectSettings.adult = $('#settingsProjectAdult').checked;
+
+    markProjectDirty();
+    $('#projectSettingsDialog').close();
+  });
+
+  $('#projectEmbedForm')?.addEventListener('submit', event => {
+    event.preventDefault();
+    const url = extractEmbedUrl($('#projectEmbedCode').value);
+    if (!/^https:\/\//i.test(url)) {
+      $('#projectEmbedCode').focus();
+      return;
+    }
+    let label=url;
+    try { label=new URL(url).hostname.replace(/^www\./,''); } catch {}
+    addBlock({type:'embed',url,label});
+    $('#projectEmbedDialog').close();
+  });
+
+  $('#previewProject')?.addEventListener('click', () => {
+    renderWorkspacePreview();
+    $('#projectPreviewDialog').showModal();
   });
 
   async function boot() {
