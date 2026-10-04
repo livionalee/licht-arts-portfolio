@@ -863,6 +863,18 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   color:color-mix(in srgb,var(--ink) 72%,var(--muted));
   transform:translateY(-2px);
 }
+.process-figure-layer{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  overflow:visible;
+  pointer-events:auto;
+  transform-origin:center center;
+}
+.process-figure-layer .process-figure{
+  z-index:1;
+}
+
 .process-figure{
   position:absolute;
   z-index:1;
@@ -900,7 +912,7 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   object-position:center center;
 }
 
-.process-card:hover .process-figure{
+.process-card:hover .process-figure-layer .process-figure{
   opacity:.62;
   transform:translate(-50%,-50%) scale(1);
   filter:saturate(.94) contrast(1);
@@ -1240,7 +1252,7 @@ footer p{
     max-width:none;
     object-position:center center;
   }
-  .process-card:hover .process-figure{
+  .process-card:hover .process-figure-layer .process-figure{
     opacity:.46;
     transform:translate(-50%,-50%) scale(1);
   }
