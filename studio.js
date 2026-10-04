@@ -38,7 +38,11 @@
     heroCharacter:'Hero character', deskGroup:'Desk group', window:'Window', sketches:'Sketches', bird:'Bird',
     heroDesk:'Drawing desk', pens:'Art pens', inkBottles:'Ink bottles', lantern:'Lantern',
     foregroundGroup:'Foreground group', foregroundWood:'Foreground wood', foregroundLeaves:'Foreground leaves',
-    heroCopy:'Hero copy group', heroTitle:'Hero headline', heroSubtitle:'Hero subtitle', heroButton:'Hero CTA'
+    heroCopy:'Hero copy group', heroTitle:'Hero headline', heroSubtitle:'Hero subtitle', heroButton:'Hero CTA',
+    processEnvisionArtwork:'Process · Envision artwork',
+    processExplainArtwork:'Process · Explain artwork',
+    processEvolveArtwork:'Process · Evolve artwork',
+    contactArtwork:'Contact artwork'
   };
 
   function withTimeout(promise, ms = 12000) {
