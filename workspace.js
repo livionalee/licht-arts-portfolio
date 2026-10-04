@@ -215,6 +215,8 @@
     restoreEditorSelection();
 
     try {
+      const supported = typeof document.queryCommandSupported !== 'function' || document.queryCommandSupported(command);
+      if (!supported) throw new Error('Unsupported editor command: ' + command);
       document.execCommand(command, false, value);
     } catch (error) {
       console.error('Rich editor command failed:', command, error);
@@ -500,30 +502,49 @@
   $('#projectContent')?.addEventListener('keyup', saveEditorSelection);
   $('#projectContent')?.addEventListener('mouseup', saveEditorSelection);
 
-  $('.rich-editor-toolbar [data-editor-command]').forEach(button => {
-    button.addEventListener('mousedown', event => event.preventDefault());
-    button.addEventListener('click', () => runEditorCommand(button.dataset.editorCommand));
-  });
+  const richToolbar = $('.rich-editor-toolbar');
 
-  $('.rich-editor-toolbar [data-editor-block]').forEach(button => {
-    button.addEventListener('mousedown', event => event.preventDefault());
-    button.addEventListener('click', () => runEditorCommand('formatBlock', '<' + button.dataset.editorBlock + '>'));
-  });
+  richToolbar?.addEventListener('mousedown', event => {
+    const button = event.target.closest('button');
+    if (!button || !richToolbar.contains(button)) return;
 
-  $('#projectInsertLink')?.addEventListener('mousedown', event => event.preventDefault());
-  $('#projectInsertLink')?.addEventListener('click', () => {
-    const href = prompt('Enter link URL');
-    if (!href) return;
-    runEditorCommand('createLink', href);
-  });
-
-  $('#projectInsertImage')?.addEventListener('mousedown', event => {
-    event.preventDefault();
+    // Keep the current text selection alive when the toolbar receives focus.
     saveEditorSelection();
+    event.preventDefault();
   });
-  $('#projectInsertImage')?.addEventListener('click', () => $('#projectInlineImageInput').click());
+
+  richToolbar?.addEventListener('click', event => {
+    const button = event.target.closest('button');
+    if (!button || !richToolbar.contains(button)) return;
+
+    const command = button.dataset.editorCommand;
+    const block = button.dataset.editorBlock;
+
+    if (command) {
+      runEditorCommand(command);
+      return;
+    }
+
+    if (block) {
+      runEditorCommand('formatBlock', block.toUpperCase());
+      return;
+    }
+
+    if (button.id === 'projectInsertLink') {
+      const href = prompt('Enter link URL');
+      if (!href) return;
+      runEditorCommand('createLink', href);
+      return;
+    }
+
+    if (button.id === 'projectInsertImage') {
+      $('#projectInlineImageInput')?.click();
+    }
+  });
+
   $('#projectInlineImageInput')?.addEventListener('change', () => {
-    uploadInlineImage($('#projectInlineImageInput').files?.[0])
+    const file = $('#projectInlineImageInput').files?.[0];
+    uploadInlineImage(file)
       .catch(error => $('#projectSaveStatus').textContent = error.message);
     $('#projectInlineImageInput').value = '';
   });
