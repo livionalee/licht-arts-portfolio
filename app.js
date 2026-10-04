@@ -1,16 +1,33 @@
 function lockDesktopProportions() {
+  const root = document.documentElement;
   const finePointer = window.matchMedia('(pointer:fine)').matches;
   const desktopDevice = Math.max(screen.width || 0, screen.height || 0) >= 1024;
 
   if (!finePointer || !desktopDevice) return;
 
-  const width = Math.max(window.innerWidth, 1181);
-  const height = Math.max(window.innerHeight, 700);
+  const logicalWidth = Math.max(screen.availWidth || window.innerWidth, 1181);
+  const logicalHeight = Math.max(screen.availHeight || window.innerHeight, 700);
 
-  document.documentElement.dataset.proportionLock = 'desktop';
-  document.documentElement.style.setProperty('--layout-width', width + 'px');
-  document.documentElement.style.setProperty('--layout-vw', (width / 100) + 'px');
-  document.documentElement.style.setProperty('--layout-svh', (height / 100) + 'px');
+  const applyScale = () => {
+    const scale = Math.min(1, window.innerWidth / logicalWidth);
+
+    root.dataset.proportionLock = 'desktop';
+    root.style.setProperty('--layout-width', logicalWidth + 'px');
+    root.style.setProperty('--layout-vw', (logicalWidth / 100) + 'px');
+    root.style.setProperty('--layout-svh', (logicalHeight / 100) + 'px');
+    root.style.setProperty('--layout-scale', String(scale));
+
+    requestAnimationFrame(() => {
+      const pageHeight = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+      );
+      root.style.setProperty('--layout-page-height', pageHeight + 'px');
+    });
+  };
+
+  applyScale();
+  window.addEventListener('resize', applyScale, { passive:true });
 }
 
 lockDesktopProportions();
