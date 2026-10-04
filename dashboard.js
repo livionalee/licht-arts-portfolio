@@ -10,14 +10,9 @@
   const syncPill = $('#syncPill');
   const title = $('#dashboardTitle');
 
-  const projects = [
-    { title:'Beyond the Clouds', type:'Digital Illustration', image:'assets/work-1.webp', description:'Environmental illustration and visual storytelling.' },
-    { title:'Quiet Growth', type:'Brand & Visual Design', image:'assets/work-2.webp', description:'Botanical identity and visual-system exploration.' },
-    { title:'Daily Fragments', type:'Illustration Series', image:'assets/work-3.webp', description:'Sketchbook-inspired observational illustration series.' },
-    { title:'Verdant Signal', type:'Digital Experience', image:'assets/work-1.webp', description:'Digital-art and interface composition study.' },
-    { title:'Field Notes', type:'Editorial / Identity', image:'assets/work-2.webp', description:'Editorial structure mixed with botanical details.' },
-    { title:'Green Horizon', type:'Environment & Key Art', image:'assets/work-3.webp', description:'Scenic key-art and environment exploration.' }
-  ];
+  let adminProjects = [];
+  let activeProjectId = null;
+  let projectDirty = false;
 
   let session = JSON.parse(localStorage.getItem('licht-atelier-session') || 'null');
 
@@ -65,26 +60,216 @@
     history.replaceState(null, '', '#' + name);
   }
 
-  function renderProjects() {
-    $('#projectAdminGrid').innerHTML = projects.map(function(project, index) {
-      return '<article class="project-admin-card">' +
-        '<div class="project-admin-art" style="background-image:url(\'' + project.image + '\')"></div>' +
-        '<div class="project-admin-copy">' +
-        '<span>' + String(index + 1).padStart(2,'0') + ' · ' + project.type + '</span>' +
-        '<h3>' + project.title + '</h3>' +
-        '<p>' + project.description + '</p>' +
-        '</div></article>';
-    }).join('');
+  function projectStatus(project) {
+    if (project.is_hidden) return 'hidden';
+    return project.status === 'published' || project.published ? 'published' : 'draft';
+  }
+
+  function filteredProjects() {
+    const query = ($('#projectSearch')?.value || '').trim().toLowerCase();
+    const filter = $('#projectStatusFilter')?.value || 'all';
+
+    return adminProjects.filter(project => {
+      const haystack = [project.title, project.category, ...(project.tags || [])].join(' ').toLowerCase();
+      if (query && !haystack.includes(query)) return false;
+      if (filter !== 'all' && projectStatus(project) !== filter) return false;
+      return true;
+    });
+  }
+
+  function renderProjectList() {
+    const list = $('#projectList');
+    if (!list) return;
+
+    const visible = filteredProjects();
+    list.innerHTML = visible.length ? visible.map(project => {
+      const status = projectStatus(project);
+      const thumb = project.cover ? "style=\"background-image:url('" + project.cover.replace(/'/g, '%27') + "')\"" : '';
+      return '<button class="content-item ' + (project.id === activeProjectId ? 'active' : '') + '" data-project-id="' + project.id + '">' +
+        '<span class="content-thumb" ' + thumb + '></span>' +
+        '<span class="content-item-copy"><strong>' + escapeHtml(project.title) + '</strong><span>' + escapeHtml(project.category || 'Uncategorized') + '</span></span>' +
+        '<span class="content-badge ' + status + '">' + status + '</span>' +
+        '</button>';
+    }).join('') : '<p class="muted" style="padding:12px">No projects found.</p>';
+
+    list.querySelectorAll('[data-project-id]').forEach(button => {
+      button.addEventListener('click', () => openProjectEditor(button.dataset.projectId));
+    });
+
+    const badge = document.querySelector('.dash-view[data-view="projects"] .info-badge');
+    if (badge) badge.textContent = adminProjects.length + ' projects';
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function markProjectDirty() {
+    projectDirty = true;
+    const status = $('#projectSaveStatus');
+    if (status) status.textContent = 'Unsaved changes';
+  }
+
+  function updateCoverPreview() {
+    const value = ($('#projectCover')?.value || '').trim();
+    const preview = $('#projectCoverPreview');
+    if (!preview) return;
+    preview.style.backgroundImage = value ? "url('" + value.replace(/'/g, '%27') + "')" : '';
+    preview.innerHTML = value ? '' : '<span>No cover</span>';
+  }
+
+  function openProjectEditor(id) {
+    const project = adminProjects.find(item => item.id === id);
+    if (!project) return;
+
+    activeProjectId = project.id;
+    projectDirty = false;
+    $('#projectEditorEmpty').hidden = true;
+    $('#projectForm').hidden = false;
+    $('#projectId').value = project.id;
+    $('#projectTitle').value = project.title || '';
+    $('#projectCategory').value = project.category || '';
+    $('#projectSortOrder').value = project.sort_order ?? 0;
+    $('#projectExcerpt').value = project.excerpt || project.description || '';
+    $('#projectContent').value = project.content || project.description || '';
+    $('#projectTags').value = (project.tags || []).join(', ');
+    $('#projectCover').value = project.cover || '';
+    $('#projectBehance').value = project.behance_url || '';
+    $('#projectFormHeading').textContent = project.title || 'Untitled project';
+    $('#projectState').textContent = project.is_hidden ? 'HIDDEN' : ((project.status || (project.published ? 'published' : 'draft')).toUpperCase());
+    $('#hideProjectBtn').textContent = project.is_hidden ? 'Show' : 'Hide';
+    $('#deleteProjectBtn').hidden = false;
+    $('#projectSaveStatus').textContent = 'No unsaved changes';
+    updateCoverPreview();
+    renderProjectList();
+  }
+
+  function newProjectEditor() {
+    activeProjectId = null;
+    projectDirty = false;
+    $('#projectEditorEmpty').hidden = true;
+    $('#projectForm').hidden = false;
+    $('#projectId').value = '';
+    $('#projectTitle').value = '';
+    $('#projectCategory').value = 'Graphic Design';
+    $('#projectSortOrder').value = adminProjects.length;
+    $('#projectExcerpt').value = '';
+    $('#projectContent').value = '';
+    $('#projectTags').value = '';
+    $('#projectCover').value = '';
+    $('#projectBehance').value = '';
+    $('#projectFormHeading').textContent = 'New project';
+    $('#projectState').textContent = 'DRAFT';
+    $('#hideProjectBtn').textContent = 'Hide';
+    $('#deleteProjectBtn').hidden = true;
+    $('#projectSaveStatus').textContent = 'New unsaved project';
+    updateCoverPreview();
+    renderProjectList();
+  }
+
+  function projectPayload(statusOverride) {
+    const existing = adminProjects.find(item => item.id === activeProjectId);
+    return {
+      id: activeProjectId || undefined,
+      title: $('#projectTitle').value.trim(),
+      category: $('#projectCategory').value.trim() || 'Graphic Design',
+      sort_order: Number($('#projectSortOrder').value || 0),
+      excerpt: $('#projectExcerpt').value.trim(),
+      content: $('#projectContent').value,
+      description: $('#projectExcerpt').value.trim(),
+      tags: $('#projectTags').value.split(',').map(tag => tag.trim()).filter(Boolean),
+      cover: $('#projectCover').value.trim(),
+      behance_url: $('#projectBehance').value.trim(),
+      images: existing?.images || [],
+      is_hidden: existing?.is_hidden || false,
+      status: statusOverride || existing?.status || (existing?.published ? 'published' : 'draft')
+    };
+  }
+
+  async function loadProjects() {
+    const data = await apiCall({ action:'project-list' });
+    adminProjects = data.projects || [];
+    renderProjectList();
+    return adminProjects;
+  }
+
+  async function saveProject(status) {
+    const payload = projectPayload(status);
+    if (!payload.title) {
+      $('#projectSaveStatus').textContent = 'Title is required';
+      $('#projectTitle').focus();
+      return;
+    }
+
+    $('#projectSaveStatus').textContent = status === 'published' ? 'Publishing…' : 'Saving draft…';
+    const data = await apiCall({ action:'project-save', project:payload });
+    const saved = data.project;
+    const index = adminProjects.findIndex(item => item.id === saved.id);
+    if (index >= 0) adminProjects[index] = saved;
+    else adminProjects.push(saved);
+
+    activeProjectId = saved.id;
+    projectDirty = false;
+    openProjectEditor(saved.id);
+    $('#projectSaveStatus').textContent = status === 'published' ? 'Published ✓' : 'Draft saved';
+  }
+
+  async function toggleProjectHidden() {
+    const existing = adminProjects.find(item => item.id === activeProjectId);
+    if (!existing) return;
+    const payload = { ...projectPayload(existing.status), is_hidden: !existing.is_hidden };
+    const data = await apiCall({ action:'project-save', project:payload });
+    const index = adminProjects.findIndex(item => item.id === data.project.id);
+    if (index >= 0) adminProjects[index] = data.project;
+    openProjectEditor(data.project.id);
+  }
+
+  async function deleteActiveProject() {
+    const existing = adminProjects.find(item => item.id === activeProjectId);
+    if (!existing) return;
+    if (!confirm('Delete “' + existing.title + '” permanently?')) return;
+
+    await apiCall({ action:'project-delete', id:existing.id });
+    adminProjects = adminProjects.filter(item => item.id !== existing.id);
+    activeProjectId = null;
+    $('#projectForm').hidden = true;
+    $('#projectEditorEmpty').hidden = false;
+    renderProjectList();
+  }
+
+  async function uploadProjectCover(file) {
+    if (!file) return;
+    $('#projectSaveStatus').textContent = 'Uploading cover…';
+
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const result = await apiCall({
+      action:'upload',
+      name:file.name,
+      contentType:file.type,
+      base64
+    });
+
+    $('#projectCover').value = result.url;
+    updateCoverPreview();
+    markProjectDirty();
+    $('#projectSaveStatus').textContent = 'Cover uploaded · unsaved changes';
   }
 
   async function hydrateDashboard() {
     syncPill.classList.remove('ok');
     syncPill.innerHTML = '<i></i>Checking…';
 
-    const [published, draft, revisions] = await Promise.all([
+    const [published, draft, revisions, projectRows] = await Promise.all([
       publicConfig(),
       apiCall({ action:'draft-get' }),
-      apiCall({ action:'revisions' })
+      apiCall({ action:'revisions' }),
+      loadProjects()
     ]);
 
     const publishedConfig = published.config || { managed:{}, customElements:[] };
@@ -97,6 +282,8 @@
     $('#statSyncNote').textContent = same ? 'Draft matches live site' : 'Unpublished changes exist';
     $('#statManaged').textContent = String(managedCount).padStart(2,'0');
     $('#statRevisions').textContent = String(revisionItems.length).padStart(2,'0');
+    const projectStat = document.querySelector('.stats-grid .stat-card:nth-child(2) strong');
+    if (projectStat) projectStat.textContent = String(projectRows.length).padStart(2,'0');
     $('#cmsHealth').textContent = 'Online';
     $('#draftStatus').textContent = same ? 'Synced' : 'Changes pending';
 
@@ -152,7 +339,20 @@
     location.reload();
   });
 
-  renderProjects();
+  $('#newProjectBtn')?.addEventListener('click', newProjectEditor);
+  $('#projectSearch')?.addEventListener('input', renderProjectList);
+  $('#projectStatusFilter')?.addEventListener('change', renderProjectList);
+  $('#saveProjectDraft')?.addEventListener('click', () => saveProject('draft').catch(error => $('#projectSaveStatus').textContent = error.message));
+  $('#publishProject')?.addEventListener('click', () => saveProject('published').catch(error => $('#projectSaveStatus').textContent = error.message));
+  $('#hideProjectBtn')?.addEventListener('click', () => toggleProjectHidden().catch(error => $('#projectSaveStatus').textContent = error.message));
+  $('#deleteProjectBtn')?.addEventListener('click', () => deleteActiveProject().catch(error => $('#projectSaveStatus').textContent = error.message));
+  $('#uploadProjectCover')?.addEventListener('click', () => $('#projectCoverInput').click());
+  $('#projectCoverInput')?.addEventListener('change', () => uploadProjectCover($('#projectCoverInput').files?.[0]).catch(error => $('#projectSaveStatus').textContent = error.message));
+  $('#projectCover')?.addEventListener('input', () => { updateCoverPreview(); markProjectDirty(); });
+  $('#projectForm')?.querySelectorAll('input,textarea').forEach(field => {
+    if (field.id === 'projectCover') return;
+    field.addEventListener('input', markProjectDirty);
+  });
 
   async function boot() {
     const hash = location.hash.replace('#','');
