@@ -722,6 +722,25 @@
 
     doc.addEventListener('keydown', handleUndoShortcut, true);
 
+    // Managed images must never use the browser's native drag ghost.
+    // Studio owns movement through pointer events, even when opacity is 0.
+    doc.addEventListener('dragstart', event => {
+      const image = event.target.closest?.('img');
+      if (!image) return;
+      if (image.closest?.('[data-editor-key]') || image.matches?.('[data-home-image]')) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+
+    doc.querySelectorAll('img').forEach(image => {
+      if (image.closest('[data-editor-key]') || image.matches('[data-home-image]')) {
+        image.draggable = false;
+        image.style.webkitUserDrag = 'none';
+        image.style.userSelect = 'none';
+      }
+    });
+
     doc.addEventListener('pointerdown', event => {
       if (resize) {
         event.preventDefault();
