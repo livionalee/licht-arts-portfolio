@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>LichtArts Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css?v=20261004c" />
+  <link rel="stylesheet" href="dashboard.css?v=20261004d" />
 </head>
 <body>
   <section class="dash-login" id="dashLogin">
@@ -157,9 +157,44 @@
                   <textarea id="projectExcerpt" rows="3" placeholder="Short description shown in cards and previews."></textarea>
                 </label>
 
-                <label class="span-2">Full content
-                  <textarea id="projectContent" rows="9" placeholder="Full project write-up. Markdown-friendly plain text."></textarea>
-                </label>
+                <div class="rich-editor-field span-2">
+                  <div class="rich-editor-label">
+                    <span>Content</span>
+                    <small>Format text, add lists/links, and insert uploaded images.</small>
+                  </div>
+
+                  <div class="rich-editor-shell">
+                    <div class="rich-editor-toolbar" role="toolbar" aria-label="Project content formatting">
+                      <button type="button" data-editor-command="undo" title="Undo">↶</button>
+                      <button type="button" data-editor-command="redo" title="Redo">↷</button>
+                      <span></span>
+                      <button type="button" data-editor-command="bold" title="Bold"><b>B</b></button>
+                      <button type="button" data-editor-command="italic" title="Italic"><i>I</i></button>
+                      <button type="button" data-editor-command="underline" title="Underline"><u>U</u></button>
+                      <button type="button" data-editor-block="h2" title="Heading 2">H₂</button>
+                      <button type="button" data-editor-block="h3" title="Heading 3">H₃</button>
+                      <span></span>
+                      <button type="button" data-editor-command="insertUnorderedList" title="Bulleted list">•☰</button>
+                      <button type="button" data-editor-command="insertOrderedList" title="Numbered list">1☰</button>
+                      <button type="button" data-editor-block="blockquote" title="Quote">❞</button>
+                      <button type="button" data-editor-command="justifyLeft" title="Align left">≡</button>
+                      <button type="button" data-editor-command="justifyCenter" title="Align center">≣</button>
+                      <span></span>
+                      <button type="button" id="projectInsertLink" title="Insert link">↗</button>
+                      <button type="button" id="projectInsertImage" title="Insert uploaded image">▧+</button>
+                      <input id="projectInlineImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                    </div>
+
+                    <div
+                      id="projectContent"
+                      class="rich-editor"
+                      contenteditable="true"
+                      role="textbox"
+                      aria-multiline="true"
+                      data-placeholder="Write your project here… Format text and insert photos like a document."
+                    ></div>
+                  </div>
+                </div>
 
                 <label class="span-2">Tags
                   <input id="projectTags" placeholder="illustration, branding, game art" />
@@ -238,6 +273,6 @@
   </div>
 
   <script src="cms-api.js?v=20261004g"></script>
-  <script src="dashboard.js?v=20261004b"></script>
+  <script src="dashboard.js?v=20261004d"></script>
 </body>
 </html>
