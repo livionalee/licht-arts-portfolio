@@ -396,35 +396,3 @@ if (!prefersReducedMotion && window.matchMedia('(pointer:fine)').matches) {
 renderProjects();
 loadCmsProjects();
 observeReveals();
-
-
-function initLichtPointerRhythm() {
-  const word = document.querySelector('#lichtWord');
-  if (!word || prefersReducedMotion || !window.matchMedia('(pointer:fine)').matches) return;
-
-  let frame = 0;
-
-  const update = event => {
-    if (frame) return;
-
-    frame = requestAnimationFrame(() => {
-      const rect = word.getBoundingClientRect();
-      const nx = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width - .5) * 2));
-      const ny = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - .5) * 2));
-
-      word.style.setProperty('--licht-mx', (nx * 24).toFixed(2) + 'px');
-      word.style.setProperty('--licht-my', (ny * 16).toFixed(2) + 'px');
-      word.style.setProperty('--licht-rot', (nx * 4.5).toFixed(2) + 'deg');
-      frame = 0;
-    });
-  };
-
-  word.addEventListener('pointermove', update);
-  word.addEventListener('pointerleave', () => {
-    word.style.setProperty('--licht-mx', '0px');
-    word.style.setProperty('--licht-my', '0px');
-    word.style.setProperty('--licht-rot', '0deg');
-  });
-}
-
-initLichtPointerRhythm();
