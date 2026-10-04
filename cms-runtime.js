@@ -120,11 +120,52 @@
     hero.appendChild(el);
   }
 
+  function applyHomepageContent(content) {
+    const values = content && typeof content === 'object' ? content : {};
+
+    document.querySelectorAll('[data-home-content]').forEach(el => {
+      const key = el.dataset.homeContent;
+      if (Object.prototype.hasOwnProperty.call(values,key)) {
+        el.textContent = String(values[key] ?? '');
+      }
+    });
+
+    document.querySelectorAll('[data-home-image]').forEach(el => {
+      const key = el.dataset.homeImage;
+      if (!Object.prototype.hasOwnProperty.call(values,key)) return;
+      const src = String(values[key] || '').trim();
+
+      if (key === 'contactMarkImage') {
+        const mark = el.closest('.contact-mark');
+        if (src) {
+          el.src = src;
+          el.hidden = false;
+          mark?.classList.add('has-custom-image');
+        } else {
+          el.removeAttribute('src');
+          el.hidden = true;
+          mark?.classList.remove('has-custom-image');
+        }
+        return;
+      }
+
+      if (src) el.src = src;
+    });
+
+    document.querySelectorAll('[data-home-link]').forEach(el => {
+      const key = el.dataset.homeLink;
+      if (Object.prototype.hasOwnProperty.call(values,key) && el.matches('a')) {
+        el.href = String(values[key] || '#');
+      }
+    });
+  }
+
   function applyConfig(config) {
     const cfg = config && typeof config === 'object' ? config : {};
     Object.entries(cfg.managed || {}).forEach(([key, state]) => {
       applyBox(document.querySelector('[data-editor-key="' + CSS.escape(key) + '"]'), state);
     });
+    applyHomepageContent(cfg.content || {});
     clearCustom();
     (cfg.customElements || []).forEach(renderCustom);
     window.dispatchEvent(new CustomEvent('licht:config-applied', { detail: cfg }));
