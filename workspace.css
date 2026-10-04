@@ -472,3 +472,84 @@
 .home-upload-btn[disabled],
 #saveHomeContentDraft[disabled],
 #publishHomeContent[disabled]{opacity:.55;cursor:wait}
+
+.home-crop-dialog{width:min(760px,calc(100vw - 28px))}
+.home-crop-card{overflow:visible}
+.home-crop-body{gap:18px}
+.home-crop-stage{
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-height:460px;
+  max-height:62vh;
+  padding:18px;
+  overflow:hidden;
+  border:1px solid #2b3930;
+  border-radius:12px;
+  background:
+    linear-gradient(45deg,#111814 25%,transparent 25%),
+    linear-gradient(-45deg,#111814 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#111814 75%),
+    linear-gradient(-45deg,transparent 75%,#111814 75%),
+    #0b100d;
+  background-size:22px 22px;
+  background-position:0 0,0 11px,11px -11px,-11px 0;
+  user-select:none;
+  touch-action:none;
+}
+#homeCropCanvas{
+  display:block;
+  max-width:100%;
+  max-height:56vh;
+  width:auto;
+  height:auto;
+  box-shadow:0 18px 55px rgba(0,0,0,.42);
+  cursor:grab;
+  touch-action:none;
+}
+#homeCropCanvas.is-dragging{cursor:grabbing}
+.home-crop-grid{
+  position:absolute;
+  inset:18px;
+  pointer-events:none;
+  opacity:.28;
+}
+.home-crop-grid i{position:absolute;background:#fff}
+.home-crop-grid i:nth-child(1),
+.home-crop-grid i:nth-child(2){top:0;bottom:0;width:1px}
+.home-crop-grid i:nth-child(1){left:33.333%}
+.home-crop-grid i:nth-child(2){left:66.666%}
+.home-crop-grid i:nth-child(3),
+.home-crop-grid i:nth-child(4){left:0;right:0;height:1px}
+.home-crop-grid i:nth-child(3){top:33.333%}
+.home-crop-grid i:nth-child(4){top:66.666%}
+.home-crop-controls{display:grid;gap:16px}
+.home-crop-control-group{display:grid;gap:8px}
+.home-crop-control-group>span,
+.home-crop-zoom>span{font-size:9px;font-weight:800;color:#9ba89e;text-transform:uppercase;letter-spacing:.08em}
+.home-crop-ratios{display:flex;flex-wrap:wrap;gap:7px}
+.home-crop-ratios button{
+  min-width:68px;
+  height:34px;
+  border:1px solid #2c3930;
+  border-radius:8px;
+  background:#101712;
+  color:#87948a;
+  font-size:9px;
+}
+.home-crop-ratios button:hover,
+.home-crop-ratios button.active{
+  border-color:#46df53;
+  color:#63ec6e;
+  background:#122017;
+}
+.home-crop-zoom{display:grid;gap:8px}
+.home-crop-zoom>span{display:flex;justify-content:space-between}
+.home-crop-zoom output{color:#62ea6d}
+.home-crop-zoom input{width:100%;accent-color:#42dc4e}
+.home-crop-hint{margin:0;color:#67746a;font-size:9px;line-height:1.5}
+@media(max-width:720px){
+  .home-crop-stage{min-height:340px;padding:10px}
+  .home-crop-grid{inset:10px}
+  #homeCropCanvas{max-height:48vh}
+}
