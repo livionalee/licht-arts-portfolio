@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>LichtArts Workspace</title>
-  <link rel="stylesheet" href="workspace.css?v=20261004h" />
+  <link rel="stylesheet" href="workspace.css?v=20261004i" />
 </head>
 <body>
   <section class="dash-login" id="dashLogin">
@@ -183,6 +183,15 @@
                         <button type="button" data-add-project-block="divider"><b>—</b><span>Divider</span></button>
                       </div>
 
+                      <div class="builder-tools-title builder-edit-title">
+                        <span>Edit Project</span>
+                      </div>
+
+                      <div class="builder-edit-grid">
+                        <button type="button" id="projectStylesBtn"><b>✎</b><span>Styles</span></button>
+                        <button type="button" id="projectSettingsBtn"><b>⚙</b><span>Settings</span></button>
+                      </div>
+
                       <div class="builder-tip">
                         <strong>Arrange your story</strong>
                         <p>Drag blocks to reorder them, or use the ↑ ↓ controls on each block.</p>
@@ -228,8 +237,9 @@
                   <small>Drafts stay private. Publish makes the project available to the live portfolio.</small>
                 </div>
                 <div class="publish-actions">
+                  <button type="button" class="ghost-btn button-reset" id="previewProject">Preview</button>
                   <button type="button" class="secondary-btn button-reset" id="saveProjectDraft">Save draft</button>
-                  <button type="button" class="primary-btn button-reset" id="publishProject">Publish</button>
+                  <button type="button" class="primary-btn button-reset" id="publishProject">Update Project</button>
                 </div>
               </div>
             </form>
@@ -270,7 +280,120 @@
     </main>
   </div>
 
+
+  <dialog class="workspace-modal" id="projectStylesDialog">
+    <form method="dialog" class="workspace-modal-card" id="projectStylesForm">
+      <div class="workspace-modal-head">
+        <div><span>PROJECT</span><h3>Project Styles</h3></div>
+        <button type="button" data-close-dialog="projectStylesDialog">×</button>
+      </div>
+
+      <div class="workspace-modal-body">
+        <label class="setting-row">
+          <span><strong>Background Color</strong><small>Applied to the project case-study viewer.</small></span>
+          <span class="style-color-control">
+            <input id="projectBackgroundColor" type="color" value="#081009" />
+            <input id="projectBackgroundHex" maxlength="7" value="#081009" />
+          </span>
+        </label>
+
+        <label class="setting-row setting-slider">
+          <span><strong>Content Spacing</strong><small>Set to 0 px for edge-to-edge stacked media.</small></span>
+          <span>
+            <input id="projectContentSpacing" type="range" min="0" max="80" step="1" value="28" />
+            <output id="projectContentSpacingValue">28 px</output>
+          </span>
+        </label>
+
+        <label class="setting-row">
+          <span><strong>Rounded Content</strong><small>Turn off to remove rounded corners from the viewer and media.</small></span>
+          <input id="projectRoundedContent" class="switch-input" type="checkbox" checked />
+        </label>
+      </div>
+
+      <div class="workspace-modal-actions">
+        <button type="button" class="secondary-btn button-reset" data-close-dialog="projectStylesDialog">Cancel</button>
+        <button type="submit" class="primary-btn button-reset">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="workspace-modal workspace-modal-wide" id="projectSettingsDialog">
+    <form method="dialog" class="workspace-modal-card" id="projectSettingsForm">
+      <div class="workspace-modal-head">
+        <div><span>PROJECT</span><h3>Project Information</h3></div>
+        <button type="button" data-close-dialog="projectSettingsDialog">×</button>
+      </div>
+
+      <div class="workspace-modal-body settings-form-grid">
+        <label class="span-2">Title
+          <input id="settingsProjectTitle" maxlength="160" />
+        </label>
+
+        <label class="span-2">Tags
+          <input id="settingsProjectTags" placeholder="free download, branding, illustration" />
+          <small>Comma separated.</small>
+        </label>
+
+        <label class="span-2">Categories
+          <input id="settingsProjectCategories" placeholder="Graphic Design, Product Design" />
+          <small>Up to 3 categories. The first category is used in the portfolio filter metadata.</small>
+        </label>
+
+        <label class="span-2">Tools Used
+          <input id="settingsProjectTools" placeholder="Adobe Photoshop, Blender, Illustrator" />
+        </label>
+
+        <label>Visibility
+          <select id="settingsProjectVisibility">
+            <option value="everyone">Everyone</option>
+            <option value="private">Private / hidden</option>
+          </select>
+        </label>
+
+        <label class="adult-setting">
+          <span>Adult Content</span>
+          <span><input id="settingsProjectAdult" type="checkbox" /> Contains adult content</span>
+        </label>
+      </div>
+
+      <div class="workspace-modal-actions">
+        <button type="button" class="secondary-btn button-reset" data-close-dialog="projectSettingsDialog">Cancel</button>
+        <button type="submit" class="primary-btn button-reset">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="workspace-modal" id="projectEmbedDialog">
+    <form method="dialog" class="workspace-modal-card" id="projectEmbedForm">
+      <div class="workspace-modal-head">
+        <div><span>MEDIA</span><h3>Embed Content</h3><p>Paste a URL or iframe embed code from Sketchfab, YouTube, Vimeo, ArtStation and similar services.</p></div>
+        <button type="button" data-close-dialog="projectEmbedDialog">×</button>
+      </div>
+
+      <div class="workspace-modal-body">
+        <label>Paste URL or Embed Code
+          <textarea id="projectEmbedCode" rows="9" placeholder="<iframe src=&quot;https://sketchfab.com/models/.../embed&quot;></iframe>"></textarea>
+        </label>
+      </div>
+
+      <div class="workspace-modal-actions">
+        <button type="button" class="secondary-btn button-reset" data-close-dialog="projectEmbedDialog">Cancel</button>
+        <button type="submit" class="primary-btn button-reset">Add Embed</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="workspace-preview-dialog" id="projectPreviewDialog">
+    <button type="button" class="preview-close" data-close-dialog="projectPreviewDialog">×</button>
+    <article class="workspace-project-preview" id="workspaceProjectPreview">
+      <span class="preview-category" id="previewCategory"></span>
+      <h1 id="previewTitle"></h1>
+      <div id="previewContent"></div>
+    </article>
+  </dialog>
+
   <script src="cms-api.js?v=20261004g"></script>
-  <script src="workspace.js?v=20261004h"></script>
+  <script src="workspace.js?v=20261004i"></script>
 </body>
 </html>
