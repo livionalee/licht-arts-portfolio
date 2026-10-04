@@ -808,7 +808,14 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
 }
 .process-card>span,
 .process-card h3,
-.process-card p{position:relative;z-index:3}
+.process-card p{
+  position:relative;
+  z-index:4;
+}
+.process-card:hover h3,
+.process-card:hover p{
+  text-shadow:0 2px 18px var(--paper),0 0 1px var(--paper);
+}
 .process-card>span{font-size:10px;color:var(--green);font-weight:850}
 .process-card h3{
   margin:74px 0 18px;
@@ -895,14 +902,14 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
 }
 
 .process-envision:hover .process-figure-envision{
-  opacity:.38;
-  transform:translate(0,-2px) scale(.985);
-  filter:saturate(.7) brightness(1.12) contrast(.94) blur(0);
+  opacity:.24;
+  transform:translate(0,-2px) scale(.965);
+  filter:saturate(.62) brightness(1.08) contrast(.92) blur(0);
 }
 .process-explain:hover .process-figure-explain{
-  opacity:.42;
-  transform:translate(0,-3px) scaleX(-1) scale(.995);
-  filter:saturate(.38) brightness(.98) contrast(1.08);
+  opacity:.28;
+  transform:translate(0,-3px) scaleX(-1) scale(.975);
+  filter:saturate(.32) brightness(.96) contrast(1.04);
 }
 .process-evolve:hover .process-figure-evolve{
   opacity:.62;
@@ -1172,12 +1179,15 @@ footer{
 .hero .cms-custom-element[type="image"]{height:auto}
 
 html[data-proportion-lock="desktop"]{
-  min-width:var(--layout-width);
+  background:var(--paper);
 }
 html[data-proportion-lock="desktop"] body{
-  min-width:var(--layout-width);
-  overflow-x:auto;
+  width:var(--layout-width);
+  min-width:0;
+  overflow-x:hidden;
+  transform:scale(var(--layout-scale,1));
+  transform-origin:top left;
 }
-html[data-proportion-lock="desktop"] .site-header{
-  min-width:var(--layout-width);
+html[data-proportion-lock="desktop"]{
+  min-height:calc(var(--layout-page-height,100vh) * var(--layout-scale,1));
 }
