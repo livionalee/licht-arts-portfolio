@@ -1,4 +1,4 @@
-const projects = [
+const fallbackProjects = [
   {
     title: 'Beyond the Clouds',
     category: 'illustration',
@@ -49,6 +49,8 @@ const projects = [
   }
 ];
 
+let projects = [...fallbackProjects];
+
 const root = document.documentElement;
 const projectGrid = document.querySelector('#projectGrid');
 const filters = [...document.querySelectorAll('.filter')];
@@ -64,19 +66,34 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 
 let activeFilter = 'all';
 
+function escapeProjectText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[char]));
+}
+
 function renderProjects() {
   const visibleProjects = projects.filter(project => activeFilter === 'all' || project.category === activeFilter);
 
   projectGrid.innerHTML = visibleProjects.map((project, index) => {
     const projectIndex = projects.indexOf(project);
+    const artClass = project.art || '';
+    const artStyle = project.cover
+      ? ` style="background-image:url('${String(project.cover).replace(/'/g, '%27')}')"`
+      : '';
+
     return `
-      <article class="project-card reveal" tabindex="0" role="button" aria-label="Open ${project.title}" data-project="${projectIndex}">
-        <div class="project-art ${project.art}"></div>
+      <article class="project-card reveal" tabindex="0" role="button" aria-label="Open ${escapeProjectText(project.title)}" data-project="${projectIndex}">
+        <div class="project-art ${artClass}"${artStyle}></div>
         <div class="project-info">
           <span class="project-index">${String(index + 1).padStart(2, '0')}</span>
           <div class="project-copy">
-            <h3>${project.title}</h3>
-            <p>${project.categoryLabel}</p>
+            <h3>${escapeProjectText(project.title)}</h3>
+            <p>${escapeProjectText(project.categoryLabel)}</p>
           </div>
           <span class="project-arrow" aria-hidden="true">↗</span>
         </div>
@@ -102,11 +119,12 @@ function openProject(index) {
   const project = projects[index];
   if (!project) return;
 
-  dialogArt.className = `dialog-art project-art ${project.art}`;
+  dialogArt.className = `dialog-art project-art ${project.art || ''}`;
+  dialogArt.style.backgroundImage = project.cover ? `url('${String(project.cover).replace(/'/g, '%27')}')` : '';
   dialogMeta.textContent = project.categoryLabel;
   dialogTitle.textContent = project.title;
-  dialogDescription.textContent = project.description;
-  dialogTags.innerHTML = project.tags.map(tag => `<span>${tag}</span>`).join('');
+  dialogDescription.textContent = project.content || project.description || project.excerpt || '';
+  dialogTags.innerHTML = (project.tags || []).map(tag => `<span>${escapeProjectText(tag)}</span>`).join('');
 
   if (!dialog.open) dialog.showModal();
 }
@@ -117,6 +135,45 @@ function setTheme(theme) {
   const themeColor = theme === 'dark' ? '#081009' : '#f5f3eb';
   document.querySelector('meta[name="theme-color"]').content = themeColor;
   themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+}
+
+async function loadCmsProjects() {
+  const api = window.LICHT_CMS_API;
+  if (!api) return;
+
+  try {
+    const response = await fetch(api + '?resource=projects', { cache:'no-store' });
+    if (!response.ok) return;
+
+    const data = await response.json();
+    if (!Array.isArray(data.projects) || !data.projects.length) return;
+
+    const normalizeCategory = value => {
+      const category = String(value || '').toLowerCase();
+      if (category.includes('illustr')) return 'illustration';
+      if (category.includes('brand') || category.includes('identity') || category.includes('editorial')) return 'identity';
+      return 'digital';
+    };
+
+    projects = data.projects.map((project, index) => ({
+      id: project.id,
+      title: project.title,
+      category: normalizeCategory(project.category),
+      categoryLabel: project.category || 'Project',
+      description: project.excerpt || project.description || '',
+      excerpt: project.excerpt || project.description || '',
+      content: project.content || project.description || '',
+      cover: project.cover || '',
+      art: project.cover ? '' : fallbackProjects[index % fallbackProjects.length]?.art,
+      tags: Array.isArray(project.tags) ? project.tags : [],
+      behanceUrl: project.behance_url || ''
+    }));
+
+    renderProjects();
+loadCmsProjects();
+  } catch {
+    // Keep local fallback projects when the CMS is unavailable.
+  }
 }
 
 setTheme(localStorage.getItem('licht-theme') || 'light');
