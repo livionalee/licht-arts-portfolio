@@ -802,12 +802,40 @@
     return { ...homeDefaults, ...(siteDraftConfig.content || {}) };
   }
 
+  const homePreviewMap = {
+    homeEnvisionImage:'homeEnvisionImagePreview',
+    homeExplainImage:'homeExplainImagePreview',
+    homeEvolveImage:'homeEvolveImagePreview'
+  };
+
+  function updateHomeImagePreview(inputId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(homePreviewMap[inputId]);
+    if (!input || !preview) return;
+
+    const button = preview.closest('[data-home-image-preview]');
+    const src = String(input.value || '').trim();
+
+    if (src) {
+      preview.src = src;
+      button?.classList.remove('is-empty');
+    } else {
+      preview.removeAttribute('src');
+      button?.classList.add('is-empty');
+    }
+  }
+
+  function updateHomeImagePreviews() {
+    Object.keys(homePreviewMap).forEach(updateHomeImagePreview);
+  }
+
   function populateHomeContentEditor() {
     const content = normalizedHomeContent();
     Object.entries(homeFieldMap).forEach(([id,key]) => {
       const field = document.getElementById(id);
       if (field) field.value = content[key] ?? '';
     });
+    updateHomeImagePreviews();
     $('#homeContentStatus').textContent = 'Draft loaded';
     $('#homeContentActionStatus').textContent = '';
   }
@@ -847,6 +875,7 @@
     });
 
     target.value = result.url;
+    updateHomeImagePreview(targetId);
     markHomeContentDirty();
     $('#homeContentActionStatus').textContent = 'Image uploaded · unsaved changes';
   }
@@ -1189,7 +1218,18 @@
     document.getElementById(id)?.addEventListener('input', markHomeContentDirty);
   });
 
-  $$('.home-upload-btn').forEach(button => {
+  $('[data-home-image-preview]').forEach(button => {
+    button.addEventListener('click', () => {
+      pendingHomeUploadTarget = button.dataset.homeImagePreview || null;
+      $('#homeContentUploadInput')?.click();
+    });
+  });
+
+  Object.keys(homePreviewMap).forEach(inputId => {
+    document.getElementById(inputId)?.addEventListener('input', () => updateHomeImagePreview(inputId));
+  });
+
+  $('.home-upload-btn').forEach(button => {
     button.addEventListener('click', () => {
       pendingHomeUploadTarget = button.dataset.homeUpload || null;
       $('#homeContentUploadInput')?.click();
