@@ -866,15 +866,62 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
     transform .72s cubic-bezier(.16,.78,.22,1),
     filter .58s ease;
 }
-.process-evolve:hover .process-figure{
+.process-envision .process-figure-envision{
+  left:-10%;
+  right:auto;
+  bottom:-14%;
+  height:112%;
+  max-width:72%;
+  transform:translate(-18px,34px) scale(.93);
+  filter:saturate(.55) brightness(1.08) contrast(.9) blur(.6px);
+  -webkit-mask-image:linear-gradient(to top,#000 58%,rgba(0,0,0,.88) 78%,transparent 100%);
+  mask-image:linear-gradient(to top,#000 58%,rgba(0,0,0,.88) 78%,transparent 100%);
+}
+.process-explain .process-figure-explain{
+  right:-8%;
+  bottom:-15%;
+  height:110%;
+  max-width:70%;
+  transform:translate(18px,30px) scaleX(-1) scale(.94);
+  filter:saturate(.28) brightness(.92) contrast(1.08);
+  -webkit-mask-image:linear-gradient(to top,#000 60%,rgba(0,0,0,.9) 80%,transparent 100%);
+  mask-image:linear-gradient(to top,#000 60%,rgba(0,0,0,.9) 80%,transparent 100%);
+}
+.process-evolve .process-figure-evolve{
+  right:-3%;
+  bottom:-10%;
+  height:118%;
+  max-width:78%;
+}
+
+.process-envision:hover .process-figure-envision{
+  opacity:.38;
+  transform:translate(0,-2px) scale(.985);
+  filter:saturate(.7) brightness(1.12) contrast(.94) blur(0);
+}
+.process-explain:hover .process-figure-explain{
+  opacity:.42;
+  transform:translate(0,-3px) scaleX(-1) scale(.995);
+  filter:saturate(.38) brightness(.98) contrast(1.08);
+}
+.process-evolve:hover .process-figure-evolve{
   opacity:.62;
   transform:translateY(-4px) scale(1);
   filter:saturate(.94) contrast(1);
 }
-.process-evolve:hover h3,
-.process-evolve:hover p,
-.process-evolve:hover>span{
+.process-card:hover h3,
+.process-card:hover p,
+.process-card:hover>span{
   text-shadow:0 2px 16px var(--paper);
+}
+.process-envision:hover::before{
+  background:radial-gradient(circle at 28% 48%,color-mix(in srgb,var(--green-bright) 22%,transparent),transparent 68%);
+}
+.process-explain:hover::before{
+  background:radial-gradient(circle at 66% 46%,color-mix(in srgb,var(--green) 14%,transparent),transparent 70%);
+}
+.process-evolve:hover::before{
+  background:radial-gradient(circle at 62% 45%,color-mix(in srgb,var(--green-bright) 20%,transparent),transparent 70%);
 }
 
 .contact{
@@ -1036,13 +1083,10 @@ footer{
     border-bottom:0;
     padding-right:40px;
   }
-  .process-figure{
-    right:-2%;
-    bottom:-12%;
-    height:116%;
-    width:auto;
-    max-width:48%;
-  }
+  .process-figure{height:116%;width:auto;max-width:48%}
+  .process-envision .process-figure-envision{left:auto;right:46%;bottom:-12%;height:112%;max-width:48%}
+  .process-explain .process-figure-explain{right:-1%;bottom:-12%;height:112%;max-width:48%}
+  .process-evolve .process-figure-evolve{right:-2%;bottom:-12%;height:116%;max-width:48%}
   .process-card:last-child{border-bottom:0}
   .process-card h3{margin-top:34px}
   footer{padding-left:40px}
@@ -1099,14 +1143,13 @@ footer{
     margin-right:-40px;
   }
   .process-card{min-height:300px}
-  .process-figure{
-    right:-18%;
-    bottom:-8%;
-    height:108%;
-    width:auto;
-    max-width:78%;
-  }
-  .process-evolve:hover .process-figure{opacity:.46}
+  .process-figure{height:108%;width:auto;max-width:78%}
+  .process-envision .process-figure-envision{left:-26%;right:auto;bottom:-8%;height:104%;max-width:76%}
+  .process-explain .process-figure-explain{right:-22%;bottom:-8%;height:104%;max-width:76%}
+  .process-evolve .process-figure-evolve{right:-18%;bottom:-8%;height:108%;max-width:78%}
+  .process-envision:hover .process-figure-envision{opacity:.32}
+  .process-explain:hover .process-figure-explain{opacity:.34}
+  .process-evolve:hover .process-figure-evolve{opacity:.46}
   .contact{min-height:700px;display:block}
   .contact-mark{width:calc(var(--layout-vw, 1vw) * 72);margin:60px 0 -170px calc(var(--layout-vw, 1vw) * 28)}
   footer{padding:28px 20px;flex-direction:column;align-items:flex-start}
