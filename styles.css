@@ -733,7 +733,10 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   100%{translate:-12px 0}
 }
 
-.process{background:var(--paper)}
+.process{
+  background:var(--paper);
+  padding-bottom:0;
+}
 .process-intro{
   display:grid;
   grid-template-columns:1.35fr .65fr;
@@ -750,15 +753,17 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   margin-top:70px;
   display:grid;
   grid-template-columns:repeat(3,1fr);
+  align-items:stretch;
   border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
 }
 .process-card{
-  min-height:330px;
-  padding:28px 34px 48px 0;
+  min-height:410px;
+  padding:28px 34px 54px 0;
   border-right:1px solid var(--line);
   position:relative;
   isolation:isolate;
-  overflow:hidden;
+  overflow:visible;
   transition:
     background .42s var(--ease),
     transform .42s var(--ease),
@@ -768,6 +773,7 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   content:"";
   position:absolute;
   inset:0;
+  overflow:hidden;
   z-index:-2;
   pointer-events:none;
   opacity:0;
@@ -837,17 +843,20 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
 .process-figure{
   position:absolute;
   z-index:1;
-  right:-8%;
-  bottom:-36%;
-  width:min(78%,430px);
-  max-width:none;
+  right:-3%;
+  bottom:-10%;
+  height:118%;
+  width:auto;
+  max-width:78%;
+  object-fit:contain;
+  object-position:bottom right;
   pointer-events:none;
   opacity:0;
-  transform:translateY(34px) scale(.94);
+  transform:translateY(32px) scale(.96);
   transform-origin:bottom center;
   filter:saturate(.8) contrast(.96);
-  -webkit-mask-image:linear-gradient(to top,#000 54%,rgba(0,0,0,.95) 72%,transparent 100%);
-  mask-image:linear-gradient(to top,#000 54%,rgba(0,0,0,.95) 72%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to top,#000 66%,rgba(0,0,0,.96) 84%,transparent 100%);
+  mask-image:linear-gradient(to top,#000 66%,rgba(0,0,0,.96) 84%,transparent 100%);
   transition:
     opacity .58s ease,
     transform .72s cubic-bezier(.16,.78,.22,1),
@@ -855,7 +864,7 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
 }
 .process-evolve:hover .process-figure{
   opacity:.62;
-  transform:translateY(0) scale(1.01);
+  transform:translateY(-4px) scale(1);
   filter:saturate(.94) contrast(1);
 }
 .process-evolve:hover h3,
@@ -1007,8 +1016,23 @@ footer{
   .about-grid,.process-intro{grid-template-columns:1fr}
   .about-copy{max-width:720px}
   .process-grid{grid-template-columns:1fr}
-  .process-card,.process-card+.process-card{padding:28px 0 42px;border-right:0;border-bottom:1px solid var(--line);min-height:240px}
-  .process-figure{right:-2%;bottom:-54%;width:min(48%,360px)}
+  .process{padding-bottom:0}
+  .process-grid{border-bottom:1px solid var(--line)}
+  .process-card,.process-card+.process-card{
+    padding:28px 0 42px;
+    border-right:0;
+    border-bottom:1px solid var(--line);
+    min-height:280px;
+    overflow:hidden;
+  }
+  .process-card:last-child{border-bottom:0}
+  .process-figure{
+    right:-2%;
+    bottom:-12%;
+    height:116%;
+    width:auto;
+    max-width:48%;
+  }
   .process-card:last-child{border-bottom:0}
   .process-card h3{margin-top:34px}
   footer{padding-left:40px}
@@ -1061,8 +1085,14 @@ footer{
   .about-circle{width:190px}
   .fall-leaf{opacity:.65}
   .process-grid{margin-top:45px}
-  .process-card{min-height:280px}
-  .process-figure{right:-20%;bottom:-18%;width:76%}
+  .process-card{min-height:300px}
+  .process-figure{
+    right:-18%;
+    bottom:-8%;
+    height:108%;
+    width:auto;
+    max-width:78%;
+  }
   .process-evolve:hover .process-figure{opacity:.46}
   .contact{min-height:700px;display:block}
   .contact-mark{width:72vw;margin:60px 0 -170px 28vw}
