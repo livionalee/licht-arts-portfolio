@@ -135,8 +135,24 @@
       if (!Object.prototype.hasOwnProperty.call(values,key)) return;
       const src = String(values[key] || '').trim();
 
+      const frameKey = key + 'Frame';
+      const frame = values[frameKey] && typeof values[frameKey] === 'object'
+        ? values[frameKey]
+        : null;
+      const ratio = frame && Number(frame.ratio) > 0
+        ? Number(frame.ratio)
+        : null;
+
       if (key === 'contactMarkImage') {
         const mark = el.closest('.contact-mark');
+        if (ratio && mark) {
+          mark.style.setProperty('--home-image-ratio',String(ratio));
+          mark.dataset.cropFitted = 'true';
+        } else if (mark) {
+          mark.style.removeProperty('--home-image-ratio');
+          delete mark.dataset.cropFitted;
+        }
+
         if (src) {
           el.src = src;
           el.hidden = false;
@@ -147,6 +163,15 @@
           mark?.classList.remove('has-custom-image');
         }
         return;
+      }
+
+      const layer = el.closest('.process-figure-layer');
+      if (ratio && layer) {
+        layer.style.setProperty('--home-image-ratio',String(ratio));
+        layer.dataset.cropFitted = 'true';
+      } else if (layer) {
+        layer.style.removeProperty('--home-image-ratio');
+        delete layer.dataset.cropFitted;
       }
 
       if (src) el.src = src;
