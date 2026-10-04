@@ -1,0 +1,67 @@
+name: Deploy to InfinityFree
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infinityfree-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Sync website to InfinityFree
+    runs-on: ubuntu-latest
+    env:
+      FTP_SERVER: ${{ secrets.INFINITYFREE_FTP_SERVER }}
+      FTP_USERNAME: ${{ secrets.INFINITYFREE_FTP_USERNAME }}
+      FTP_PASSWORD: ${{ secrets.INFINITYFREE_FTP_PASSWORD }}
+      FTP_DIR: ${{ secrets.INFINITYFREE_FTP_DIR }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check InfinityFree deployment secrets
+        id: ftp
+        shell: bash
+        run: |
+          if [[ -n "$FTP_SERVER" && -n "$FTP_USERNAME" && -n "$FTP_PASSWORD" && -n "$FTP_DIR" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::InfinityFree deploy skipped. Add INFINITYFREE_FTP_SERVER, INFINITYFREE_FTP_USERNAME, INFINITYFREE_FTP_PASSWORD and INFINITYFREE_FTP_DIR as repository Actions secrets."
+          fi
+
+      - name: Sync files to InfinityFree
+        if: steps.ftp.outputs.ready == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ env.FTP_SERVER }}
+          username: ${{ env.FTP_USERNAME }}
+          password: ${{ env.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
+          local-dir: ./
+          server-dir: ${{ env.FTP_DIR }}
+          state-name: .licht-ftp-sync-state.json
+          dangerous-clean-slate: false
+          log-level: standard
+          timeout: 600000
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/node_modules/**
+            README.md
+
+      - name: Deployment skipped
+        if: steps.ftp.outputs.ready != 'true'
+        run: |
+          echo "GitHub Pages remains unaffected."
+          echo "Supabase remains the backend; only the static frontend is deployed to InfinityFree."
