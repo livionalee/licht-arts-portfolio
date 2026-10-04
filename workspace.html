@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>LichtArts Workspace</title>
-  <link rel="stylesheet" href="workspace.css?v=20261004l" />
+  <link rel="stylesheet" href="workspace.css?v=20261004n" />
 </head>
 <body>
   <section class="dash-login" id="dashLogin">
@@ -294,7 +294,7 @@
 
               <div class="homepage-card-editor">
                 <div class="homepage-card-title"><strong>Envision</strong><span>01</span></div>
-                <button type="button" class="homepage-image-preview" data-home-image-preview="homeEnvisionImage" aria-label="Replace Envision image">
+                <button type="button" class="homepage-image-preview" data-home-image-preview="homeEnvisionImage" data-home-file-input="homeEnvisionFile" aria-label="Replace Envision image">
                   <img id="homeEnvisionImagePreview" alt="Envision character preview" />
                   <span class="homepage-image-overlay">
                     <b>↥</b>
@@ -306,14 +306,15 @@
                   <label>Title<input id="homeEnvisionTitle" /></label>
                   <label class="span-2">Description<textarea id="homeEnvisionText" rows="2"></textarea></label>
                   <label class="span-2">Character image URL
-                    <div class="asset-input-row"><input id="homeEnvisionImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeEnvisionImage">Upload</button></div>
+                    <div class="asset-input-row"><input id="homeEnvisionImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeEnvisionImage" data-home-file-input="homeEnvisionFile">Upload</button></div>
+                    <input id="homeEnvisionFile" class="home-image-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
                   </label>
                 </div>
               </div>
 
               <div class="homepage-card-editor">
                 <div class="homepage-card-title"><strong>Explain</strong><span>02</span></div>
-                <button type="button" class="homepage-image-preview" data-home-image-preview="homeExplainImage" aria-label="Replace Explain image">
+                <button type="button" class="homepage-image-preview" data-home-image-preview="homeExplainImage" data-home-file-input="homeExplainFile" aria-label="Replace Explain image">
                   <img id="homeExplainImagePreview" alt="Explain character preview" />
                   <span class="homepage-image-overlay">
                     <b>↥</b>
@@ -325,14 +326,15 @@
                   <label>Title<input id="homeExplainTitle" /></label>
                   <label class="span-2">Description<textarea id="homeExplainText" rows="2"></textarea></label>
                   <label class="span-2">Character image URL
-                    <div class="asset-input-row"><input id="homeExplainImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeExplainImage">Upload</button></div>
+                    <div class="asset-input-row"><input id="homeExplainImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeExplainImage" data-home-file-input="homeExplainFile">Upload</button></div>
+                    <input id="homeExplainFile" class="home-image-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
                   </label>
                 </div>
               </div>
 
               <div class="homepage-card-editor">
                 <div class="homepage-card-title"><strong>Evolve</strong><span>03</span></div>
-                <button type="button" class="homepage-image-preview" data-home-image-preview="homeEvolveImage" aria-label="Replace Evolve image">
+                <button type="button" class="homepage-image-preview" data-home-image-preview="homeEvolveImage" data-home-file-input="homeEvolveFile" aria-label="Replace Evolve image">
                   <img id="homeEvolveImagePreview" alt="Evolve character preview" />
                   <span class="homepage-image-overlay">
                     <b>↥</b>
@@ -344,7 +346,8 @@
                   <label>Title<input id="homeEvolveTitle" /></label>
                   <label class="span-2">Description<textarea id="homeEvolveText" rows="2"></textarea></label>
                   <label class="span-2">Character image URL
-                    <div class="asset-input-row"><input id="homeEvolveImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeEvolveImage">Upload</button></div>
+                    <div class="asset-input-row"><input id="homeEvolveImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeEvolveImage" data-home-file-input="homeEvolveFile">Upload</button></div>
+                    <input id="homeEvolveFile" class="home-image-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
                   </label>
                 </div>
               </div>
@@ -366,14 +369,14 @@
                 <label>Button link<input id="homeContactButtonHref" type="url" /></label>
                 <label>Fallback mark letter<input id="homeContactMarkLetter" maxlength="3" /></label>
                 <label class="span-2">Right-side image URL
-                  <div class="asset-input-row"><input id="homeContactMarkImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeContactMarkImage">Upload</button></div>
+                  <div class="asset-input-row"><input id="homeContactMarkImage" /><button type="button" class="secondary-btn home-upload-btn" data-home-upload="homeContactMarkImage" data-home-file-input="homeContactMarkFile">Upload</button></div>
+                  <input id="homeContactMarkFile" class="home-image-file-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
                   <small>Leave empty to show the circular “L” mark instead.</small>
                 </label>
               </div>
             </div>
           </div>
 
-          <input id="homeContentUploadInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
           <div class="homepage-editor-actions">
             <a class="secondary-btn" href="index.html" target="_blank">Preview live site ↗</a>
             <span id="homeContentActionStatus"></span>
@@ -503,7 +506,9 @@
     </article>
   </dialog>
 
+  <div class="workspace-toast" id="workspaceToast" role="status" aria-live="polite"></div>
+
   <script src="cms-api.js?v=20261004g"></script>
-  <script src="workspace.js?v=20261004m"></script>
+  <script src="workspace.js?v=20261004n"></script>
 </body>
 </html>
