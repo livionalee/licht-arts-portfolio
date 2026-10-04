@@ -1886,3 +1886,22 @@ html[data-proportion-lock="desktop"]{
 @media(max-device-width:720px){
   .footer-socials{justify-self:start}
 }
+
+/* Unified LichtArts brand symbol */
+.brand-mark{
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle at 30% 24%,#dfffd7 0 5%,#5fee55 12%,#11891b 50%,#064e0d 100%);
+}
+.brand-mark::before{
+  content:"";
+  position:static;
+  width:56%;
+  height:72%;
+  border-radius:0;
+  transform:none;
+  background:url("assets/brand/lichtarts-symbol.svg") center/contain no-repeat;
+}
+.brand-mark::after{display:none!important}
+.brand-mark span{display:none!important}
