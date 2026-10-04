@@ -751,6 +751,7 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
 }
 .process-grid{
   margin-top:70px;
+  margin-right:-8vw;
   display:grid;
   grid-template-columns:repeat(3,1fr);
   align-items:stretch;
@@ -801,7 +802,10 @@ html[data-theme="dark"] .project-art{filter:brightness(.72) saturate(1.08)}
   transition:opacity .42s ease,transform .72s var(--ease);
 }
 .process-card+ .process-card{padding-left:34px}
-.process-card:last-child{border-right:0}
+.process-card:last-child{
+  border-right:0;
+  padding-right:8vw;
+}
 .process-card>span,
 .process-card h3,
 .process-card p{position:relative;z-index:3}
@@ -1015,7 +1019,10 @@ footer{
   .about,.process,.contact{padding-inline:40px}
   .about-grid,.process-intro{grid-template-columns:1fr}
   .about-copy{max-width:720px}
-  .process-grid{grid-template-columns:1fr}
+  .process-grid{
+    grid-template-columns:1fr;
+    margin-right:-40px;
+  }
   .process{padding-bottom:0}
   .process-grid{border-bottom:1px solid var(--line)}
   .process-card,.process-card+.process-card{
@@ -1025,7 +1032,10 @@ footer{
     min-height:280px;
     overflow:hidden;
   }
-  .process-card:last-child{border-bottom:0}
+  .process-card:last-child{
+    border-bottom:0;
+    padding-right:40px;
+  }
   .process-figure{
     right:-2%;
     bottom:-12%;
@@ -1084,7 +1094,10 @@ footer{
 
   .about-circle{width:190px}
   .fall-leaf{opacity:.65}
-  .process-grid{margin-top:45px}
+  .process-grid{
+    margin-top:45px;
+    margin-right:-40px;
+  }
   .process-card{min-height:300px}
   .process-figure{
     right:-18%;
