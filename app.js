@@ -120,6 +120,7 @@ let activeProjectIndex = -1;
 let activeReplyParentId = null;
 let activeComments = [];
 let viewerRolePromise = null;
+let viewerRoleReady = false;
 let viewerRole = { isEditor:false, session:null };
 const behanceProfileUrl = 'https://www.behance.net/louirodila';
 
@@ -288,6 +289,7 @@ async function resolveViewerRole(force = false) {
     let session = storedEditorSession();
     if (!session?.access_token) {
       viewerRole = { isEditor:false, session:null };
+      viewerRoleReady = true;
       return viewerRole;
     }
 
@@ -304,6 +306,7 @@ async function resolveViewerRole(force = false) {
       isEditor:Boolean(check.data?.is_editor),
       session:check.data?.is_editor ? session : null
     };
+    viewerRoleReady = true;
     return viewerRole;
   })();
 
@@ -326,9 +329,20 @@ async function cmsAction(body, { auth = false } = {}) {
   return result.data;
 }
 
-function updateOwnerActions(isEditor) {
+function updateOwnerActions(isEditor, ready = true) {
   [projectPrimaryOwnerAction, projectMoreOwnerAction].forEach(link => {
     if (!link) return;
+
+    link.dataset.roleReady = ready ? 'true' : 'false';
+    link.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    link.classList.toggle('is-role-loading', !ready);
+
+    if (!ready) {
+      link.removeAttribute('href');
+      link.textContent = 'Checking access…';
+      return;
+    }
+
     link.href = isEditor ? 'workspace.html#projects' : behanceProfileUrl;
     link.textContent = isEditor ? 'Edit Project' : 'Follow on Behance';
     link.target = '_blank';
@@ -529,7 +543,7 @@ async function loadProjectComments(project) {
 }
 
 async function prepareProjectViewer(project) {
-  updateOwnerActions(false);
+  updateOwnerActions(viewerRole.isEditor, viewerRoleReady);
   clearReplyContext();
 
   if (projectCommentStatus) projectCommentStatus.textContent = '';
@@ -544,7 +558,7 @@ async function prepareProjectViewer(project) {
     viewerRole = { isEditor:false, session:null };
   }
 
-  updateOwnerActions(viewerRole.isEditor);
+  updateOwnerActions(viewerRole.isEditor, true);
   updateComposerAvatar();
   updateCommentSubmitState();
   await loadProjectComments(project);
@@ -790,6 +804,13 @@ async function loadCmsProjects() {
   }
 }
 
+// Resolve editor/visitor state early so project owner actions never change mid-click.
+void resolveViewerRole().catch(() => {
+  viewerRole = { isEditor:false, session:null };
+  viewerRoleReady = true;
+  updateOwnerActions(false, true);
+});
+
 setTheme(localStorage.getItem('licht-theme') || 'light');
 
 themeToggle.addEventListener('click', () => {
@@ -821,6 +842,15 @@ dialog.addEventListener('click', event => {
     event.clientY >= rect.top &&
     event.clientY <= rect.bottom;
   if (!inside) dialog.close();
+});
+
+[projectPrimaryOwnerAction, projectMoreOwnerAction].forEach(link => {
+  link?.addEventListener('click', event => {
+    if (link.dataset.roleReady !== 'true') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
 });
 
 projectSaveAction?.addEventListener('click', () => {
