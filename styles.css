@@ -2192,3 +2192,15 @@ html[data-proportion-lock="desktop"]{
     padding-left:8px;
   }
 }
+
+/* Evolve artwork depth: character may cross in front of the headline */
+.process-evolve .process-figure-layer{
+  z-index:5;
+}
+.process-evolve>span,
+.process-evolve p{
+  z-index:7;
+}
+.process-evolve h3{
+  z-index:4;
+}
