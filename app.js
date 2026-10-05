@@ -103,10 +103,25 @@ const projectAppreciateAction = document.querySelector('#projectAppreciateAction
 const projectToolsAction = document.querySelector('#projectToolsAction');
 const projectCommentInput = document.querySelector('#projectCommentInput');
 const projectCommentButton = document.querySelector('#projectCommentButton');
+const projectCommentName = document.querySelector('#projectCommentName');
+const projectCommentAvatar = document.querySelector('#projectCommentAvatar');
+const projectCommentIdentity = document.querySelector('#projectCommentIdentity');
+const projectCommentStatus = document.querySelector('#projectCommentStatus');
+const projectCommentsList = document.querySelector('#projectCommentsList');
+const projectReplyContext = document.querySelector('#projectReplyContext');
+const projectReplyLabel = document.querySelector('#projectReplyLabel');
+const projectReplyCancel = document.querySelector('#projectReplyCancel');
+const projectPrimaryOwnerAction = document.querySelector('#projectPrimaryOwnerAction');
+const projectMoreOwnerAction = document.querySelector('#projectMoreOwnerAction');
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let activeFilter = 'all';
 let activeProjectIndex = -1;
+let activeReplyParentId = null;
+let activeComments = [];
+let viewerRolePromise = null;
+let viewerRole = { isEditor:false, session:null };
+const behanceProfileUrl = 'https://www.behance.net/louirodila';
 
 function escapeProjectText(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -221,6 +236,383 @@ function renderProjects() {
       }
     });
   });
+}
+
+function storedEditorSession() {
+  try {
+    return JSON.parse(localStorage.getItem('licht-atelier-session') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function saveEditorSession(session) {
+  if (!session) return;
+  localStorage.setItem('licht-atelier-session', JSON.stringify(session));
+}
+
+async function rawCmsPost(body, token = '') {
+  const api = window.LICHT_CMS_API;
+  if (!api) throw new Error('CMS unavailable');
+
+  const headers = { 'content-type':'application/json' };
+  if (token) headers.authorization = 'Bearer ' + token;
+
+  const response = await fetch(api, {
+    method:'POST',
+    headers,
+    body:JSON.stringify(body)
+  });
+
+  const data = await response.json().catch(() => ({}));
+  return { response, data };
+}
+
+async function refreshViewerSession(session) {
+  if (!session?.refresh_token) return null;
+  const { response, data } = await rawCmsPost({
+    action:'refresh',
+    refresh_token:session.refresh_token
+  });
+  if (!response.ok || !data?.access_token) return null;
+
+  const next = { ...session, ...data };
+  saveEditorSession(next);
+  return next;
+}
+
+async function resolveViewerRole(force = false) {
+  if (viewerRolePromise && !force) return viewerRolePromise;
+
+  viewerRolePromise = (async () => {
+    let session = storedEditorSession();
+    if (!session?.access_token) {
+      viewerRole = { isEditor:false, session:null };
+      return viewerRole;
+    }
+
+    let check = await rawCmsPost({ action:'session-check' }, session.access_token);
+    if (!check.data?.is_editor && session.refresh_token) {
+      const refreshed = await refreshViewerSession(session);
+      if (refreshed) {
+        session = refreshed;
+        check = await rawCmsPost({ action:'session-check' }, session.access_token);
+      }
+    }
+
+    viewerRole = {
+      isEditor:Boolean(check.data?.is_editor),
+      session:check.data?.is_editor ? session : null
+    };
+    return viewerRole;
+  })();
+
+  return viewerRolePromise;
+}
+
+async function cmsAction(body, { auth = false } = {}) {
+  let session = auth ? (viewerRole.session || storedEditorSession()) : null;
+  let result = await rawCmsPost(body, session?.access_token || '');
+
+  if (auth && result.response.status === 401 && session?.refresh_token) {
+    const refreshed = await refreshViewerSession(session);
+    if (refreshed) {
+      viewerRole.session = refreshed;
+      result = await rawCmsPost(body, refreshed.access_token);
+    }
+  }
+
+  if (!result.response.ok) throw new Error(result.data?.error || 'Request failed');
+  return result.data;
+}
+
+function updateOwnerActions(isEditor) {
+  [projectPrimaryOwnerAction, projectMoreOwnerAction].forEach(link => {
+    if (!link) return;
+    link.href = isEditor ? 'workspace.html#projects' : behanceProfileUrl;
+    link.textContent = isEditor ? 'Edit Project' : 'Follow on Behance';
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    link.classList.toggle('is-admin-action', isEditor);
+  });
+}
+
+function ensureGuestKey() {
+  let key = localStorage.getItem('licht-comment-guest-key');
+  if (!key) {
+    key = crypto.randomUUID?.() || ('guest-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+    localStorage.setItem('licht-comment-guest-key', key);
+  }
+  return key;
+}
+
+function stringHash(value) {
+  let hash = 2166136261;
+  for (const char of String(value || 'guest')) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function guestAvatarHtml(name, seed, small = false) {
+  const label = String(name || 'Guest').trim() || 'Guest';
+  const hue = stringHash(seed || label) % 360;
+  const initial = escapeProjectText(label.charAt(0).toUpperCase());
+  return `<span class="guest-avatar${small ? ' small' : ''}" style="--guest-hue:${hue}"><span>${initial}</span></span>`;
+}
+
+function editorAvatarHtml(small = false) {
+  return `<span class="brand-mark comment-brand-avatar${small ? ' small' : ''}" aria-hidden="true"><span>L</span></span>`;
+}
+
+function updateComposerAvatar() {
+  if (!projectCommentAvatar) return;
+
+  if (viewerRole.isEditor) {
+    projectCommentAvatar.innerHTML = editorAvatarHtml();
+    if (projectCommentIdentity) projectCommentIdentity.hidden = true;
+    return;
+  }
+
+  if (projectCommentIdentity) projectCommentIdentity.hidden = false;
+  const name = projectCommentName?.value.trim() || 'Guest';
+  projectCommentAvatar.innerHTML = guestAvatarHtml(name, ensureGuestKey());
+}
+
+function updateCommentSubmitState() {
+  if (!projectCommentButton) return;
+  const hasBody = Boolean(projectCommentInput?.value.trim());
+  const hasIdentity = viewerRole.isEditor || Boolean(projectCommentName?.value.trim());
+  projectCommentButton.disabled = !(hasBody && hasIdentity);
+}
+
+function clearReplyContext() {
+  activeReplyParentId = null;
+  if (projectReplyContext) projectReplyContext.hidden = true;
+  if (projectReplyLabel) projectReplyLabel.textContent = '';
+}
+
+function setReplyContext(comment) {
+  activeReplyParentId = comment?.id || null;
+  if (!activeReplyParentId) return clearReplyContext();
+  if (projectReplyLabel) projectReplyLabel.textContent = 'Replying to ' + (comment.author_name || 'comment');
+  if (projectReplyContext) projectReplyContext.hidden = false;
+  projectCommentInput?.focus();
+}
+
+function commentTimeLabel(value) {
+  const date = new Date(value || '');
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString(undefined, {
+    year:'numeric', month:'short', day:'numeric',
+    hour:'numeric', minute:'2-digit'
+  });
+}
+
+function commentBadges(comment) {
+  const badges = [];
+  if (comment.is_pinned) badges.push('<span class="comment-badge pinned">Pinned</span>');
+  if (comment.is_hearted) badges.push('<span class="comment-badge hearted">♥ Licht</span>');
+  if (Number(comment.admin_rating) > 0) {
+    badges.push('<span class="comment-badge rating">' + '★'.repeat(Number(comment.admin_rating)) + '</span>');
+  }
+  return badges.join('');
+}
+
+function commentModerationHtml(comment) {
+  if (!viewerRole.isEditor) return '';
+
+  return `
+    <div class="comment-moderation">
+      <button type="button" data-comment-action="pin" data-comment-id="${comment.id}" data-value="${comment.is_pinned ? '0' : '1'}">${comment.is_pinned ? 'Unpin' : 'Pin'}</button>
+      <button type="button" data-comment-action="heart" data-comment-id="${comment.id}" data-value="${comment.is_hearted ? '0' : '1'}">${comment.is_hearted ? 'Unheart' : 'Heart'}</button>
+      <label>Rate
+        <select data-comment-rating="${comment.id}">
+          ${[0,1,2,3,4,5].map(n => `<option value="${n}"${Number(comment.admin_rating)===n?' selected':''}>${n || '—'}</option>`).join('')}
+        </select>
+      </label>
+      <button type="button" class="danger" data-comment-action="delete" data-comment-id="${comment.id}">Delete</button>
+    </div>
+  `;
+}
+
+function renderCommentNode(comment, children, depth = 0, seen = new Set()) {
+  if (!comment || seen.has(comment.id) || depth > 4) return '';
+  const nextSeen = new Set(seen);
+  nextSeen.add(comment.id);
+
+  const avatar = comment.author_type === 'editor'
+    ? editorAvatarHtml(true)
+    : guestAvatarHtml(comment.author_name, comment.avatar_seed, true);
+
+  const replies = (children.get(comment.id) || [])
+    .map(reply => renderCommentNode(reply, children, depth + 1, nextSeen))
+    .join('');
+
+  return `
+    <article class="project-comment-item${comment.is_pinned ? ' is-pinned' : ''}${comment.author_type === 'editor' ? ' is-editor' : ''}" data-comment-id="${comment.id}" style="--comment-depth:${Math.min(depth,3)}">
+      <div class="project-comment-item-avatar">${avatar}</div>
+      <div class="project-comment-item-body">
+        <div class="project-comment-item-head">
+          <strong>${escapeProjectText(comment.author_name)}</strong>
+          ${comment.author_type === 'editor' ? '<span class="comment-owner-tag">Owner</span>' : ''}
+          <time>${escapeProjectText(commentTimeLabel(comment.created_at))}</time>
+        </div>
+        <div class="comment-badges">${commentBadges(comment)}</div>
+        <p>${escapeProjectText(comment.body)}</p>
+        <div class="project-comment-item-actions">
+          <button type="button" data-comment-reply="${comment.id}">Reply</button>
+        </div>
+        ${commentModerationHtml(comment)}
+        ${replies ? '<div class="project-comment-replies">' + replies + '</div>' : ''}
+      </div>
+    </article>
+  `;
+}
+
+function renderComments() {
+  if (!projectCommentsList) return;
+
+  if (!activeComments.length) {
+    projectCommentsList.innerHTML = '<p class="project-comments-empty">No comments yet. Start the conversation.</p>';
+    return;
+  }
+
+  const byId = new Map(activeComments.map(comment => [comment.id, comment]));
+  const children = new Map();
+  const roots = [];
+
+  activeComments.forEach(comment => {
+    if (comment.parent_id && byId.has(comment.parent_id)) {
+      const list = children.get(comment.parent_id) || [];
+      list.push(comment);
+      children.set(comment.parent_id, list);
+    } else {
+      roots.push(comment);
+    }
+  });
+
+  roots.sort((a,b) =>
+    Number(Boolean(b.is_pinned)) - Number(Boolean(a.is_pinned)) ||
+    new Date(a.created_at) - new Date(b.created_at)
+  );
+
+  projectCommentsList.innerHTML = roots.map(comment => renderCommentNode(comment, children)).join('');
+}
+
+async function loadProjectComments(project) {
+  if (!projectCommentsList) return;
+
+  if (!project?.id) {
+    activeComments = [];
+    projectCommentsList.innerHTML = '<p class="project-comments-empty">Comments are available on published CMS projects.</p>';
+    return;
+  }
+
+  projectCommentsList.innerHTML = '<p class="project-comments-empty">Loading comments…</p>';
+
+  try {
+    const response = await fetch(
+      window.LICHT_CMS_API + '?resource=comments&project_id=' + encodeURIComponent(project.id),
+      { cache:'no-store' }
+    );
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Could not load comments');
+    activeComments = Array.isArray(data.comments) ? data.comments : [];
+    renderComments();
+  } catch (error) {
+    activeComments = [];
+    projectCommentsList.innerHTML =
+      '<p class="project-comments-empty error">' + escapeProjectText(error.message) + '</p>';
+  }
+}
+
+async function prepareProjectViewer(project) {
+  updateOwnerActions(false);
+  clearReplyContext();
+
+  if (projectCommentStatus) projectCommentStatus.textContent = '';
+  if (projectCommentInput) projectCommentInput.value = '';
+
+  const savedName = localStorage.getItem('licht-comment-guest-name') || '';
+  if (projectCommentName) projectCommentName.value = savedName;
+
+  try {
+    await resolveViewerRole();
+  } catch {
+    viewerRole = { isEditor:false, session:null };
+  }
+
+  updateOwnerActions(viewerRole.isEditor);
+  updateComposerAvatar();
+  updateCommentSubmitState();
+  await loadProjectComments(project);
+}
+
+async function submitProjectComment() {
+  const project = projects[activeProjectIndex];
+  if (!project?.id) return;
+
+  const bodyText = projectCommentInput?.value.trim() || '';
+  if (!bodyText) return;
+
+  const payload = {
+    action:'comment-create',
+    project_id:project.id,
+    parent_id:activeReplyParentId || '',
+    body:bodyText
+  };
+
+  if (!viewerRole.isEditor) {
+    const name = projectCommentName?.value.trim() || '';
+    if (!name) {
+      if (projectCommentStatus) projectCommentStatus.textContent = 'Enter your name first.';
+      projectCommentName?.focus();
+      return;
+    }
+
+    localStorage.setItem('licht-comment-guest-name', name);
+    payload.author_name = name;
+    payload.guest_key = ensureGuestKey();
+    payload.avatar_seed = payload.guest_key;
+  }
+
+  projectCommentButton.disabled = true;
+  projectCommentButton.textContent = activeReplyParentId ? 'Posting reply…' : 'Posting…';
+  if (projectCommentStatus) projectCommentStatus.textContent = '';
+
+  try {
+    await cmsAction(payload, { auth:viewerRole.isEditor });
+    projectCommentInput.value = '';
+    clearReplyContext();
+    if (projectCommentStatus) projectCommentStatus.textContent = 'Posted ✓';
+    await loadProjectComments(project);
+  } catch (error) {
+    if (projectCommentStatus) projectCommentStatus.textContent = error.message;
+  } finally {
+    projectCommentButton.textContent = 'Post a Comment';
+    updateCommentSubmitState();
+  }
+}
+
+async function moderateComment(action, id, value) {
+  if (!viewerRole.isEditor) return;
+  const project = projects[activeProjectIndex];
+  if (!project?.id) return;
+
+  if (action === 'delete') {
+    if (!confirm('Delete this comment and its replies?')) return;
+    await cmsAction({ action:'comment-delete', id }, { auth:true });
+  } else if (action === 'pin') {
+    await cmsAction({ action:'comment-pin', id, value:value === '1' }, { auth:true });
+  } else if (action === 'heart') {
+    await cmsAction({ action:'comment-heart', id, value:value === '1' }, { auth:true });
+  } else if (action === 'rate') {
+    await cmsAction({ action:'comment-rate', id, value:Number(value) }, { auth:true });
+  }
+
+  await loadProjectComments(project);
 }
 
 function projectStorageKey(prefix, project) {
@@ -342,6 +734,7 @@ function openProject(index) {
   });
 
   if (!dialog.open) dialog.showModal();
+  void prepareProjectViewer(project);
 
   dialogRelatedProjects?.querySelectorAll('[data-related-project]').forEach(card => {
     card.addEventListener('click', () => openProject(Number(card.dataset.relatedProject)));
@@ -466,16 +859,50 @@ projectToolsAction?.addEventListener('click', () => {
   dialogTags?.scrollIntoView({behavior:prefersReducedMotion?'auto':'smooth',block:'center'});
 });
 
-projectCommentInput?.addEventListener('input', () => {
-  if(projectCommentButton) projectCommentButton.disabled=!projectCommentInput.value.trim();
+projectCommentInput?.addEventListener('input', updateCommentSubmitState);
+
+projectCommentName?.addEventListener('input', () => {
+  localStorage.setItem('licht-comment-guest-name', projectCommentName.value.trim());
+  updateComposerAvatar();
+  updateCommentSubmitState();
+});
+
+projectReplyCancel?.addEventListener('click', () => {
+  clearReplyContext();
+  updateCommentSubmitState();
 });
 
 projectCommentButton?.addEventListener('click', () => {
-  if(!projectCommentInput?.value.trim()) return;
-  projectCommentButton.textContent='Thanks for the feedback ✓';
-  projectCommentButton.disabled=true;
-  projectCommentInput.value='';
-  setTimeout(()=>projectCommentButton.textContent='Post a Comment',1800);
+  void submitProjectComment();
+});
+
+projectCommentsList?.addEventListener('click', event => {
+  const replyButton = event.target.closest('[data-comment-reply]');
+  if (replyButton) {
+    const comment = activeComments.find(item => item.id === replyButton.dataset.commentReply);
+    if (comment) setReplyContext(comment);
+    return;
+  }
+
+  const actionButton = event.target.closest('[data-comment-action]');
+  if (!actionButton) return;
+
+  void moderateComment(
+    actionButton.dataset.commentAction,
+    actionButton.dataset.commentId,
+    actionButton.dataset.value
+  ).catch(error => {
+    if (projectCommentStatus) projectCommentStatus.textContent = error.message;
+  });
+});
+
+projectCommentsList?.addEventListener('change', event => {
+  const select = event.target.closest('[data-comment-rating]');
+  if (!select) return;
+
+  void moderateComment('rate', select.dataset.commentRating, select.value).catch(error => {
+    if (projectCommentStatus) projectCommentStatus.textContent = error.message;
+  });
 });
 
 let revealObserver;
